@@ -30,7 +30,7 @@ import networkx as nx
 import pandas as pd
 
 from topology import build_topology, HOST_PAIRS
-from traffic_gen import generate_flows
+from traffic_gen import generate_flows, CLASS_PRIORITY
 from ml_models import TrafficClassifier, CongestionPredictor
 
 
@@ -65,6 +65,9 @@ def simulate(n_intervals=20, flows_per_interval=14, seed=7):
     for t in range(n_intervals):
         flows = generate_flows(flows_per_interval, HOST_PAIRS, seed=100 + t)
         flows["pred_class"] = clf.predict(flows)
+        # the controller only knows the *predicted* class, never the ground
+        # truth, so priority must come from the classifier's output
+        flows["priority"] = flows["pred_class"].map(CLASS_PRIORITY)
         # process latency-sensitive (voice/video) flows first, like a
         # priority queue an SDN controller would apply
         flows = flows.sort_values("priority").reset_index(drop=True)

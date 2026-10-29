@@ -1,0 +1,111 @@
+scenario,load,seed,event
+normal,2,0,normal
+normal,2,1,normal
+normal,2,2,normal
+normal,2,3,normal
+normal,2,4,normal
+normal,2,5,normal
+normal,2,6,normal
+normal,2,7,normal
+normal,2,8,normal
+normal,2,9,normal
+normal,3,0,normal
+normal,3,1,normal
+normal,3,2,normal
+normal,3,3,normal
+normal,3,4,normal
+normal,3,5,normal
+normal,3,6,normal
+normal,3,7,normal
+normal,3,8,normal
+normal,3,9,normal
+normal,4,0,normal
+normal,4,1,normal
+normal,4,2,normal
+normal,4,3,normal
+normal,4,4,normal
+normal,4,5,normal
+normal,4,6,normal
+normal,4,7,normal
+normal,4,8,normal
+normal,4,9,normal
+normal,6,0,normal
+normal,6,1,normal
+normal,6,2,normal
+normal,6,3,normal
+normal,6,4,normal
+normal,6,5,normal
+normal,6,6,normal
+normal,6,7,normal
+normal,6,8,normal
+normal,6,9,normal
+normal,8,0,normal
+normal,8,1,normal
+normal,8,2,normal
+normal,8,3,normal
+normal,8,4,normal
+normal,8,5,normal
+normal,8,6,normal
+normal,8,7,normal
+normal,8,8,normal
+normal,8,9,normal
+failure,3,0,"fail ('s3', 's6')@12-28, ('s4', 's7')@20+"
+failure,3,1,"fail ('s7', 's8')@12-28, ('s2', 's4')@20+"
+failure,3,2,"fail ('s4', 's7')@12-28, ('s7', 's8')@20+"
+failure,3,3,"fail ('s6', 's7')@12-28, ('s2', 's4')@20+"
+failure,3,4,"fail ('s4', 's7')@12-28, ('s3', 's6')@20+"
+failure,3,5,"fail ('s7', 's8')@12-28, ('s3', 's6')@20+"
+failure,3,6,"fail ('s2', 's4')@12-28, ('s7', 's8')@20+"
+failure,3,7,"fail ('s4', 's7')@12-28, ('s2', 's4')@20+"
+failure,3,8,"fail ('s7', 's8')@12-28, ('s6', 's7')@20+"
+failure,3,9,"fail ('s4', 's7')@12-28, ('s1', 's2')@20+"
+failure,6,0,"fail ('s3', 's6')@12-28, ('s4', 's7')@20+"
+failure,6,1,"fail ('s7', 's8')@12-28, ('s2', 's4')@20+"
+failure,6,2,"fail ('s4', 's7')@12-28, ('s7', 's8')@20+"
+failure,6,3,"fail ('s6', 's7')@12-28, ('s2', 's4')@20+"
+failure,6,4,"fail ('s4', 's7')@12-28, ('s3', 's6')@20+"
+failure,6,5,"fail ('s7', 's8')@12-28, ('s3', 's6')@20+"
+failure,6,6,"fail ('s2', 's4')@12-28, ('s7', 's8')@20+"
+failure,6,7,"fail ('s4', 's7')@12-28, ('s2', 's4')@20+"
+failure,6,8,"fail ('s7', 's8')@12-28, ('s6', 's7')@20+"
+failure,6,9,"fail ('s4', 's7')@12-28, ('s1', 's2')@20+"
+hotspot,3,0,hotspot h3@15-26
+hotspot,3,1,hotspot h2@15-26
+hotspot,3,2,hotspot h5@15-26
+hotspot,3,3,hotspot h6@15-26
+hotspot,3,4,hotspot h4@15-26
+hotspot,3,5,hotspot h4@15-26
+hotspot,3,6,hotspot h2@15-26
+hotspot,3,7,hotspot h4@15-26
+hotspot,3,8,hotspot h6@15-26
+hotspot,3,9,hotspot h5@15-26
+hotspot,6,0,hotspot h3@15-26
+hotspot,6,1,hotspot h2@15-26
+hotspot,6,2,hotspot h5@15-26
+hotspot,6,3,hotspot h6@15-26
+hotspot,6,4,hotspot h4@15-26
+hotspot,6,5,hotspot h4@15-26
+hotspot,6,6,hotspot h2@15-26
+hotspot,6,7,hotspot h4@15-26
+hotspot,6,8,hotspot h6@15-26
+hotspot,6,9,hotspot h5@15-26
+degraded,3,0,"degrade ('s3', 's6')@10+"
+degraded,3,1,"degrade ('s2', 's4')@10+"
+degraded,3,2,"degrade ('s6', 's7')@10+"
+degraded,3,3,"degrade ('s7', 's8')@10+"
+degraded,3,4,"degrade ('s4', 's7')@10+"
+degraded,3,5,"degrade ('s4', 's7')@10+"
+degraded,3,6,"degrade ('s2', 's4')@10+"
+degraded,3,7,"degrade ('s4', 's7')@10+"
+degraded,3,8,"degrade ('s7', 's8')@10+"
+degraded,3,9,"degrade ('s6', 's7')@10+"
+degraded,6,0,"degrade ('s3', 's6')@10+"
+degraded,6,1,"degrade ('s2', 's4')@10+"
+degraded,6,2,"degrade ('s6', 's7')@10+"
+degraded,6,3,"degrade ('s7', 's8')@10+"
+degraded,6,4,"degrade ('s4', 's7')@10+"
+degraded,6,5,"degrade ('s4', 's7')@10+"
+degraded,6,6,"degrade ('s2', 's4')@10+"
+degraded,6,7,"degrade ('s4', 's7')@10+"
+degraded,6,8,"degrade ('s7', 's8')@10+"
+degraded,6,9,"degrade ('s6', 's7')@10+"

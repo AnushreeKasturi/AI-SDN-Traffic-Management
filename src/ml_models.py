@@ -67,10 +67,14 @@ class CongestionPredictor:
         self.window = window
         self.model = RandomForestRegressor(n_estimators=120, max_depth=6, random_state=42)
 
-    def _make_lag_features(self, series: np.ndarray):
+    def _make_lag_features(self, series: np.ndarray, exog: np.ndarray = None):
+        """exog[i] = extra features known at the *start* of interval i (optional)."""
         X, y = [], []
         for i in range(self.window, len(series)):
-            X.append(series[i - self.window:i])
+            x = series[i - self.window:i]
+            if exog is not None:
+                x = np.concatenate([x, exog[i]])
+            X.append(x)
             y.append(series[i])
         return np.array(X), np.array(y)
 
@@ -89,3 +93,32 @@ class CongestionPredictor:
 
     def predict_next(self, recent_window: np.ndarray) -> float:
         return float(self.model.predict(recent_window.reshape(1, -1))[0])
+
+    def fit_pooled(self, series_list, exog_list=None, residual_col=None):
+        """Train one model on many links' histories at once (offline pre-training).
+
+        residual_col: index of a feature column to use as a baseline forecast;
+        the forest then learns only the correction on top of it
+        (forecast = X[:, residual_col] + model(X)).
+        """
+        self.residual_col = residual_col
+        X_parts, y_parts = [], []
+        if exog_list is None:
+            exog_list = [None] * len(series_list)
+        for s, ex in zip(series_list, exog_list):
+            X, y = self._make_lag_features(np.asarray(s), ex)
+            if len(X):
+                X_parts.append(X)
+                y_parts.append(y)
+        X, y = np.vstack(X_parts), np.concatenate(y_parts)
+        if residual_col is not None:
+            y = y - X[:, residual_col]
+        self.model.fit(X, y)
+        return self
+
+    def predict_many(self, windows: np.ndarray) -> np.ndarray:
+        """windows: (n_links, window [+ exog]) -> next-interval utilization % per link."""
+        pred = self.model.predict(windows)
+        if getattr(self, "residual_col", None) is not None:
+            pred = pred + windows[:, self.residual_col]
+        return pred

@@ -1,0 +1,31 @@
+[1/4] classifier accuracy 0.9973
+[2/4] congestion predictor (R2 0.871), error in % points:
+      residual_rf          MAE 4.59  RMSE 10.02  MAE on congested links 24.62
+      direct_rf            MAE 4.62  RMSE 10.08  MAE on congested links 24.83
+      lag_only_rf          MAE 5.62  RMSE 12.57  MAE on congested links 30.38
+      naive_last_value     MAE 5.28  RMSE 13.21  MAE on congested links 28.88
+      naive_carried_load   MAE 4.02  RMSE 12.01  MAE on congested links 32.38
+[3/4] training learning agents for 60 episodes
+  training episode 10/60  eps=0.24  Q-Routing (RL only): 68.9ms  Hybrid Dijkstra+QL (proposed): 24.0ms
+  training episode 20/60  eps=0.16  Q-Routing (RL only): 42.0ms  Hybrid Dijkstra+QL (proposed): 10.8ms
+  training episode 30/60  eps=0.09  Q-Routing (RL only): 47.5ms  Hybrid Dijkstra+QL (proposed): 11.4ms
+  training episode 40/60  eps=0.02  Q-Routing (RL only): 79.4ms  Hybrid Dijkstra+QL (proposed): 8.5ms
+  training episode 50/60  eps=0.02  Q-Routing (RL only): 94.5ms  Hybrid Dijkstra+QL (proposed): 10.8ms
+  training episode 60/60  eps=0.02  Q-Routing (RL only): 82.8ms  Hybrid Dijkstra+QL (proposed): 13.2ms
+[4/4] evaluating on 10 test seeds x 5 loads
+  load 2 done (315s)
+  load 3 done (380s)
+  load 4 done (444s)
+  load 6 done (503s)
+  load 8 done (565s)
+
+Overall (all loads pooled):
+                               mean_latency_ms  p95_latency_ms  realtime_latency_ms  loss_pct  sla_violation_pct  max_util_pct  jain_fairness  decision_us
+strategy                                                                                                                                                  
+Static Dijkstra                          32.71           91.72                31.68     12.89              29.18         90.17           0.35         7.85
+ECMP                                     15.62           49.88                14.69      4.98              14.54         77.46           0.48        10.07
+Load-aware Dijkstra                       8.86           21.81                 8.72      0.35               3.00         55.26           0.63       226.59
+Q-Routing (RL only)                      49.08          142.46                45.93     15.14              37.66         91.53           0.64        86.50
+Hybrid Dijkstra+QL (proposed)             8.63           21.47                 8.41      0.28               2.41         56.71           0.59       259.24
+
+Saved to C:\Users\anush\downloads\CN_project\AI-SDN-Traffic-Management (3)\AI-SDN-Traffic-Management\results\hybrid  (577.4s)

@@ -1,0 +1,17 @@
+  balance 0.0 done
+  balance 0.25 done
+  balance 0.5 done
+  balance 1.0 done
+  balance 2.0 done
+                              mean_latency_ms  p95_latency_ms  sla_violation_pct  jain_fairness  max_util_pct
+balance strategy                                                                                             
+0.00    Hybrid v2 (proposed)           17.875          57.925             13.833          0.585        80.283
+        Load-aware Dijkstra            11.637          38.237             10.243          0.650        64.229
+0.25    Hybrid v2 (proposed)           14.897          50.972             10.914          0.645        67.292
+        Load-aware Dijkstra            11.637          38.237             10.243          0.650        64.229
+0.50    Hybrid v2 (proposed)           15.570          49.784             14.905          0.550        73.622
+        Load-aware Dijkstra            11.637          38.237             10.243          0.650        64.229
+1.00    Hybrid v2 (proposed)           15.496          53.695             12.048          0.623        67.631
+        Load-aware Dijkstra            11.637          38.237             10.243          0.650        64.229
+2.00    Hybrid v2 (proposed)           15.496          53.695             12.048          0.623        67.631
+        Load-aware Dijkstra            11.637          38.237             10.243          0.650        64.229

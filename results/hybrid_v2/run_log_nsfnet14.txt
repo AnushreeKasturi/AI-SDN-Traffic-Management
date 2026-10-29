@@ -1,0 +1,11 @@
+[nsfnet14] classifier acc 0.9973, predictor R2 0.872 MAE 3.63
+[nsfnet14] training 3 agents for 80 episodes
+  training episode 10/80  eps=0.25  Q-Routing (RL only): 77.9ms  Hybrid, v1 features (ablation): 19.0ms  Hybrid v2 (proposed): 18.8ms
+  training episode 20/80  eps=0.20  Q-Routing (RL only): 81.5ms  Hybrid, v1 features (ablation): 24.2ms  Hybrid v2 (proposed): 24.2ms
+  training episode 30/80  eps=0.14  Q-Routing (RL only): 47.8ms  Hybrid, v1 features (ablation): 26.5ms  Hybrid v2 (proposed): 25.6ms
+  training episode 40/80  eps=0.09  Q-Routing (RL only): 168.8ms  Hybrid, v1 features (ablation): 31.4ms  Hybrid v2 (proposed): 32.1ms
+  training episode 50/80  eps=0.04  Q-Routing (RL only): 41.3ms  Hybrid, v1 features (ablation): 20.1ms  Hybrid v2 (proposed): 18.6ms
+  training episode 60/80  eps=0.02  Q-Routing (RL only): 186.4ms  Hybrid, v1 features (ablation): 31.6ms  Hybrid v2 (proposed): 29.9ms
+  training episode 70/80  eps=0.02  Q-Routing (RL only): 71.1ms  Hybrid, v1 features (ablation): 18.1ms  Hybrid v2 (proposed): 18.9ms
+  training episode 80/80  eps=0.02  Q-Routing (RL only): 101.8ms  Hybrid, v1 features (ablation): 19.7ms  Hybrid v2 (proposed): 19.6ms
+  [nsfnet14] normal load 2 done (487s)
