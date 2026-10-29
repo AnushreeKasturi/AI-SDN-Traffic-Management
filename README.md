@@ -135,10 +135,19 @@ large reduction in congestion and drops — because it can see current load
 │   ├── ml_models.py          traffic classifier + congestion predictor
 │   ├── controller_sim.py     static vs adaptive routing simulation
 │   ├── run_experiment.py     runs everything, exports results
-│   └── template.html         dashboard template (results get injected here)
+│   ├── template.html         dashboard template (results get injected here)
+│   │                         ── hybrid routing study (section 9) ──
+│   ├── netsim.py             flow-level simulator (queueing delay, loss, failures)
+│   ├── routing.py            all routing strategies (baselines + hybrids)
+│   ├── scenarios.py          link failure / hotspot / silent degradation events
+│   ├── hybrid_experiment.py  round 1 driver (campus topology, normal traffic)
+│   └── scenario_experiment.py rounds 2–3 driver (scenarios, NSFNET, validation)
 ├── results/
 │   ├── results.json          all metrics behind the dashboard
-│   └── topology.png          rendered topology diagram
+│   ├── topology.png          rendered topology diagram
+│   ├── hybrid/               round 1 results
+│   ├── hybrid_v2/            round 2 results
+│   └── hybrid_v3/            round 3 results (campus8/, nsfnet14/, validation/)
 └── mininet_sdn/               ← a REAL Mininet + OVS + OpenFlow deployment
     ├── README_MININET.md      setup + how to run it on your own machine
     ├── network_topo.py        builds the actual Mininet topology
@@ -168,3 +177,75 @@ which when you present it:
 Presenting both makes the strongest case: the simulation shows the idea
 holds up quantitatively at scale, and the Mininet deployment proves the
 same logic runs as a real, working SDN controller.
+
+## 9. Hybrid routing study (Dijkstra + machine learning)
+
+The original controller above uses a single hand-made Dijkstra cost
+function. To go beyond plain Dijkstra, a second, more rigorous study compares
+several hybrid routing algorithms against strong baselines. It lives in
+`src/netsim.py`, `src/routing.py`, `src/scenarios.py` and the two experiment
+drivers; the original `src/controller_sim.py` results and `index.html` are
+unchanged.
+
+### Setup
+
+- **Simulator** (`netsim.py`): long-lived flows with Poisson, diurnal
+  arrivals; M/M/1-style queueing delay and overload loss on every link.
+- **Topologies**: the 8-switch campus network (`campus8`) and the 14-node
+  NSFNET backbone (`nsfnet14`), to check that results generalise.
+- **Scenarios** (`scenarios.py`): normal traffic at 5 load levels, plus
+  link failures (port-down + rerouting), a flash-crowd hotspot, and a
+  *silent* link degradation the controller cannot see in its capacity view.
+- **Strategies compared** (`routing.py`):
+
+| Strategy | What it does |
+|---|---|
+| Static Dijkstra | fixed shortest path (OSPF-like) |
+| ECMP | random choice among equal-cost shortest paths |
+| Load-aware Dijkstra | the original controller: cost grows with current + forecast load |
+| Telemetry-aware Dijkstra | Load-aware + measured delay/loss on each link |
+| Best fixed-profile Dijkstra | class-aware, telemetry-aware cost profile (one for voice/video, one for web/bulk), chosen on validation data |
+| Q-Routing | reinforcement learning only (ablation) |
+| Hybrid path-selection QL | k-shortest Dijkstra candidates, Q-learning picks one (ablation) |
+| Hybrid QL-tuned Dijkstra | Q-learning picks Dijkstra's cost profile per traffic group and network state |
+
+- **Fair evaluation**: every strategy sees identical arrivals and the same ML
+  predictions. Training, validation and test runs use disjoint random seeds;
+  every setting was chosen on validation seeds only. Results are averaged
+  over 10 test seeds, with paired Wilcoxon tests (p < 0.05) and 95% CIs.
+
+### Results in brief
+
+- All Dijkstra-based adaptive methods beat Static Dijkstra, ECMP and
+  Q-Routing by a wide margin (for example, on campus8 under normal load,
+  mean latency 8.7–9.1 ms vs 32.7 ms for Static Dijkstra and 50.4 ms for
+  Q-Routing). Pure RL routing performs worst.
+- **Best fixed-profile Dijkstra** is the strongest strategy overall. Against
+  Load-aware Dijkstra it never loses significantly on latency, SLA or
+  fairness; it cuts SLA violations by about 13% (campus8) and 19% (NSFNET)
+  and improves link-load fairness in 9 of 11 test cells on both topologies,
+  even though its profile was chosen only on campus8 validation data.
+- The telemetry term is what helps under silent degradation (campus8 mean
+  latency 12.8 ms → 9.8 ms for Telemetry-aware vs Load-aware).
+- **Honest finding:** the Q-learning hybrids mostly *tie* Load-aware Dijkstra
+  and do not beat the best fixed profile; on NSFNET the QL-tuned Dijkstra is
+  significantly slower than Load-aware Dijkstra in 7 of 11 cells. Likely
+  causes: each traffic group is rewarded only for its own flows, and the
+  tabular Q estimates are sparse and noisy.
+
+Full tables, significance tests and figures are in
+`results/hybrid_v3/<topology>/results_tables.md`; earlier rounds are in
+`results/hybrid/` and `results/hybrid_v2/`.
+
+### Reproducing
+
+```bash
+cd src
+python scenario_experiment.py --quick          # smoke test, a few minutes
+python scenario_experiment.py --validate       # choose the fixed profile (validation seeds)
+python scenario_experiment.py --topo campus8   # full test run (long)
+python scenario_experiment.py --topo nsfnet14
+```
+
+The full runs take a while and use a lot of memory; run them in a normal
+terminal rather than in the background.
