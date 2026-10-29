@@ -104,26 +104,6 @@ The adaptive controller trades a small amount of routing simplicity for a
 large reduction in congestion and drops — because it can see current load
 *and* forecast future load, while static routing is blind to both.
 
-## 6. Viva / demo talking points
-
-- **Why SDN, specifically?** Static/distributed protocols like OSPF can't
-  react to real-time traffic because no single node has a global view. SDN's
-  centralized controller is what makes ML-driven, whole-network optimization
-  possible in the first place.
-- **Why two ML models and not one?** Classification (what *kind* of traffic)
-  and forecasting (what will the *network* look like next) are different
-  problems — one is about the flow, the other is about the link. Keeping
-  them separate also means either could be swapped for a different model
-  (e.g. an LSTM for the time-series part) without touching the other.
-- **Why Random Forest?** Good accuracy on tabular, low-dimensional flow
-  features, fast to train/infer (matters for a controller making real-time
-  decisions), and gives interpretable feature importances — shown in the
-  dashboard.
-- **What would change for a real deployment?** Replace `topology.py`'s graph
-  with a live OpenFlow topology discovery module, replace `traffic_gen.py`
-  with real sFlow/NetFlow/OpenFlow stats polling, and replace the simulated
-  "push flow rules" step with actual `OFPFlowMod` messages via Ryu/ONOS.
-
 ## 7. Project structure
 
 ```
