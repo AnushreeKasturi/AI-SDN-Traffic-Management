@@ -24,7 +24,7 @@ test-py:         ## Python simulation tests
 	$(PYTHON) -m unittest discover -s tests -v
 
 test-web:        ## dashboard tests (Node 20+)
-	node --test tests/
+	node --test tests/dashboard.test.mjs
 
 serve:           ## serve the dashboard on http://localhost:$(PORT)
 	$(PYTHON) -m http.server $(PORT)

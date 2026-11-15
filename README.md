@@ -214,7 +214,7 @@ The setup steps, the full captured logs and the known limitations
 make test
 # or separately:
 python -m unittest discover -s tests -v
-node --test tests/
+node --test tests/dashboard.test.mjs
 ```
 
 The dashboard tests use no dependencies. They check that the data embedded
