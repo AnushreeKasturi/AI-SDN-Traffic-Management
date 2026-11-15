@@ -1,5 +1,12 @@
 # AI-Driven Adaptive Network Traffic Management using SDN and Machine Learning
 
+[![Dashboard](https://img.shields.io/website?url=https%3A%2F%2Fanushreekasturi.github.io%2FAI-SDN-Traffic-Management%2F&label=Dashboard&logo=github)](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/)
+[![Python 3](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)](requirements.txt)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-Random%20Forest-F7931E?logo=scikitlearn&logoColor=white)](src/ml_models.py)
+[![NetworkX](https://img.shields.io/badge/NetworkX-3.0%2B-4C8CBF)](src/topology.py)
+[![OpenFlow 1.3](https://img.shields.io/badge/OpenFlow-1.3-008080)](mininet_sdn/README_MININET.md)
+[![Last commit](https://img.shields.io/github/last-commit/AnushreeKasturi/AI-SDN-Traffic-Management?logo=github)](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/commits/main/)
+
 A computer-networks mini project that simulates a **Software-Defined Network (SDN)
 controller** which uses **machine learning** to classify traffic and predict
 congestion, then reroutes flows adaptively — and compares it against a
