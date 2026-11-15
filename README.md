@@ -18,7 +18,7 @@ The repository has three parts:
 |---|---|---|
 | **Simulation** | Fast flow-level simulator plus an 8-strategy routing study over 2 topologies, 4 scenarios and 10 test seeds | [`src/`](src/) |
 | **Real deployment** | The same controller logic on Mininet, Open vSwitch and OpenFlow 1.3 (`os-ken`) | [`mininet_sdn/`](mininet_sdn/) |
-| **Dashboard** | One self-contained web page: results explorer plus an in-browser routing simulator | [`index.html`](index.html), [live](https://anushreekasturi.github.io/FlowState/) |
+| **Dashboard** | One self-contained web page: live network replay, in-browser routing simulator and study explorer | [`index.html`](index.html), [live](https://anushreekasturi.github.io/FlowState/) |
 
 <p align="center">
   <a href="https://anushreekasturi.github.io/FlowState/"><b>Open the live dashboard →</b></a>
