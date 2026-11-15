@@ -1,7 +1,7 @@
 # Flowstate: AI-driven adaptive routing for SDN
 
-[![CI](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/actions/workflows/ci.yml/badge.svg)](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/actions/workflows/ci.yml)
-[![Dashboard](https://img.shields.io/website?url=https%3A%2F%2Fanushreekasturi.github.io%2FAI-SDN-Traffic-Management%2F&label=Dashboard&logo=github)](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/)
+[![CI](https://github.com/AnushreeKasturi/FlowState/actions/workflows/ci.yml/badge.svg)](https://github.com/AnushreeKasturi/FlowState/actions/workflows/ci.yml)
+[![Dashboard](https://img.shields.io/website?url=https%3A%2F%2Fanushreekasturi.github.io%2FFlowState%2F&label=Dashboard&logo=github)](https://anushreekasturi.github.io/FlowState/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](requirements.txt)
 [![OpenFlow 1.3](https://img.shields.io/badge/OpenFlow-1.3-008080)](mininet_sdn/README_MININET.md)
@@ -18,10 +18,10 @@ The repository has three parts:
 |---|---|---|
 | **Simulation** | Fast flow-level simulator plus an 8-strategy routing study over 2 topologies, 4 scenarios and 10 test seeds | [`src/`](src/) |
 | **Real deployment** | The same controller logic on Mininet, Open vSwitch and OpenFlow 1.3 (`os-ken`) | [`mininet_sdn/`](mininet_sdn/) |
-| **Dashboard** | One self-contained web page: results explorer plus an in-browser routing simulator | [`index.html`](index.html), [live](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/) |
+| **Dashboard** | One self-contained web page: results explorer plus an in-browser routing simulator | [`index.html`](index.html), [live](https://anushreekasturi.github.io/FlowState/) |
 
 <p align="center">
-  <a href="https://anushreekasturi.github.io/AI-SDN-Traffic-Management/"><b>Open the live dashboard →</b></a>
+  <a href="https://anushreekasturi.github.io/FlowState/"><b>Open the live dashboard →</b></a>
 </p>
 
 ---
@@ -60,8 +60,8 @@ forests and random draws are not bit-identical across releases.
 ## Quick start
 
 ```bash
-git clone https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management.git
-cd AI-SDN-Traffic-Management
+git clone https://github.com/AnushreeKasturi/FlowState.git
+cd FlowState
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
