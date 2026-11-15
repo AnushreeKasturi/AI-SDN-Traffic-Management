@@ -1,0 +1,10 @@
+{
+  "name": "ai-sdn-traffic-management",
+  "private": true,
+  "description": "Dashboard regression tests for Flowstate (dependency-free, uses node:test).",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}

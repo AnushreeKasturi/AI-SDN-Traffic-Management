@@ -1,264 +1,252 @@
-# AI-Driven Adaptive Network Traffic Management using SDN and Machine Learning
+# Flowstate: AI-driven adaptive routing for SDN
 
+[![CI](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/actions/workflows/ci.yml/badge.svg)](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/actions/workflows/ci.yml)
 [![Dashboard](https://img.shields.io/website?url=https%3A%2F%2Fanushreekasturi.github.io%2FAI-SDN-Traffic-Management%2F&label=Dashboard&logo=github)](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/)
-[![Python 3](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)](requirements.txt)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-Random%20Forest-F7931E?logo=scikitlearn&logoColor=white)](src/ml_models.py)
-[![NetworkX](https://img.shields.io/badge/NetworkX-3.0%2B-4C8CBF)](src/topology.py)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](requirements.txt)
 [![OpenFlow 1.3](https://img.shields.io/badge/OpenFlow-1.3-008080)](mininet_sdn/README_MININET.md)
-[![Last commit](https://img.shields.io/github/last-commit/AnushreeKasturi/AI-SDN-Traffic-Management?logo=github)](https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management/commits/main/)
 
-A computer-networks mini project that simulates a **Software-Defined Network (SDN)
-controller** which uses **machine learning** to classify traffic and predict
-congestion, then reroutes flows adaptively — and compares it against a
-traditional **static, non-adaptive** routing scheme on the same topology and
-the same traffic.
+Flowstate is a software-defined networking (SDN) controller that uses machine
+learning to reroute traffic before links congest. It classifies each flow
+(voice, video, web, bulk), forecasts per-link utilization one interval ahead,
+and runs Dijkstra on a link cost built from current load, forecast load and
+traffic priority.
 
-Explore the [**Flowstate dashboard**](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/)
-or open **`index.html`** directly in a browser. The self-contained website
-includes an interactive campus topology, the original experiment, the
-eight-strategy routing study, a browser simulation lab, and model evaluations.
-In the lab, inspect individual static/adaptive flow routes and download each
-run's parameters, random seed, interval results, and sample paths as JSON.
-No server or Node.js runtime is required to view it; external fonts are optional.
+The repository has three parts:
+
+| Layer | What it is | Where |
+|---|---|---|
+| **Simulation** | Fast flow-level simulator plus an 8-strategy routing study over 2 topologies, 4 scenarios and 10 test seeds | [`src/`](src/) |
+| **Real deployment** | The same controller logic on Mininet, Open vSwitch and OpenFlow 1.3 (`os-ken`) | [`mininet_sdn/`](mininet_sdn/) |
+| **Dashboard** | One self-contained web page: results explorer plus an in-browser routing simulator | [`index.html`](index.html), [live](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/) |
+
+<p align="center">
+  <a href="https://anushreekasturi.github.io/AI-SDN-Traffic-Management/"><b>Open the live dashboard →</b></a>
+</p>
 
 ---
 
-## 1. Problem statement
+## Results at a glance
 
-Traditional networks (OSPF/static routing) pick a path based on fixed link
-costs (like hop count or delay) and **never change it based on current
-traffic**. If a "shortest" path gets congested, every new flow still piles
-onto it — causing high latency and packet loss — while a different, slightly
-longer path sits idle.
+**Original experiment** (campus topology, 24 intervals, identical traffic for
+both controllers; source: [`results/results.json`](results/results.json)):
 
-**Idea:** give the network's controller a global view (this is exactly what
-SDN provides) plus a machine-learning brain that can (a) tell what *kind* of
-traffic a flow is, and (b) forecast which links are *about to* get congested.
-Use both to pick better paths in real time.
+| Metric | Static routing | AI-adaptive routing |
+|---|---|---|
+| Traffic classification accuracy (held-out) | n/a | 99.7% |
+| Average flow latency | baseline | 15.2% lower |
+| Peak link utilization | baseline | 38.8% lower |
+| Congested flows | 23 | 0 |
 
-## 2. Architecture
+**Routing study** (8 strategies; source:
+[`results/hybrid_v3/`](results/hybrid_v3/)):
 
-```
- Flow stats  ─▶ [1] Traffic Classifier (Random Forest)
- (from switches)      classifies: voice / video / web / bulk
-                              │
-                              ▼
- Link history ─▶ [2] Congestion Predictor (RF Regressor)
-                      forecasts next-interval utilization per link
-                              │
-                              ▼
-                 [3] SDN Controller (Dijkstra, re-weighted)
-                      path cost = base delay
-                               + (current load)^3  x priority factor
-                               + (forecast load)^3 x priority factor
-                              │
-                              ▼
-                 [4] Flow rules pushed to switches (simulated)
-```
+- All Dijkstra-based adaptive strategies beat Static Dijkstra, ECMP and pure
+  RL routing by a wide margin. On campus8 under normal load, mean latency is
+  8.7 to 9.2 ms for them, against 32.7 ms for Static Dijkstra.
+- **Best fixed-profile Dijkstra** is the strongest strategy. Against
+  Load-aware and Telemetry-aware Dijkstra it is never significantly worse in
+  any test cell, on any reported metric, on either network.
+- **Negative result:** the Q-learning hybrids did not add anything on top
+  of a well-chosen cost profile. Details are in [the routing study](#routing-study).
 
-This mirrors a real deployment: a **Ryu** or **ONOS** controller app would
-poll OpenFlow switch statistics, run the same two ML models, and call
-`nx.shortest_path` (or an equivalent path computation) with adaptive weights
-before pushing flow-mod messages to switches. The topology in `topology.py`
-is written the same way you'd declare it in **Mininet** (`addLink(s1, s2,
-bw=100, delay='2ms')`), so this simulation can be ported to a real Mininet +
-Ryu setup with minimal changes if you want to extend the project.
+The classifier's accuracy is high because the synthetic traffic classes are
+statistically well separated. Real traffic would be harder to classify.
 
-## 3. What's simulated
+Reruns with newer library versions give slightly different numbers. With
+Python 3.12, scikit-learn 1.9 and NumPy 2.5, `make experiment` gives 16.6%
+lower latency, 36.1% lower peak utilization, and 24 → 0 congested flows. The
+direction of every result is the same.
 
-- **Topology** (`src/topology.py`): 8 OpenFlow switches in a partial mesh (so
-  redundant paths genuinely exist between most switch pairs) + 6 hosts, each
-  link with its own capacity (Mbps) and propagation delay.
-- **Traffic generator** (`src/traffic_gen.py`): synthetic flows from 4
-  application classes (voice, video, web, bulk), each with realistic packet
-  size / inter-arrival-time / duration / demand distributions — similar in
-  spirit to real traffic-classification datasets.
-- **ML models** (`src/ml_models.py`):
-  - `TrafficClassifier` — Random Forest, trained on 1500 synthetic flows,
-    ~99–100% held-out accuracy (the classes are statistically well
-    separated, similar to real QoS classification papers).
-  - `CongestionPredictor` — Random Forest Regressor on lag features,
-    forecasts a link's utilization one interval ahead.
-- **Controller simulation** (`src/controller_sim.py`): runs 24 controller
-  intervals. In every interval it generates flows, classifies them, and
-  routes them **twice** — once with static shortest-path routing, once with
-  the AI-adaptive controller — so both strategies see *identical* traffic and
-  only the routing decision differs.
-- **Experiment driver** (`src/run_experiment.py`): runs everything, saves
-  `results/results.json` (all the numbers behind the dashboard) and
-  `results/topology.png` (the topology diagram).
-
-## 4. How to run it yourself
+## Quick start
 
 ```bash
+git clone https://github.com/AnushreeKasturi/AI-SDN-Traffic-Management.git
+cd AI-SDN-Traffic-Management
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cd src
-python3 run_experiment.py
+
+make experiment     # original experiment -> results/results.json, results/topology.png
+make test           # Python + dashboard regression tests
+make serve          # dashboard at http://localhost:8000
 ```
 
-This regenerates `results/results.json` and `results/topology.png`. The
-dashboard embeds a saved copy of these results; rerunning the Python
-experiment alone does not update `index.html`.
+To view the dashboard without any setup, open `index.html` in a browser. Run
+`make help` to list every target. Without `make`, each target is a single
+command in the [`Makefile`](Makefile).
 
-## 5. Key results (from the included run)
-
-| Metric | Static routing | AI-Adaptive routing |
-|---|---|---|
-| Traffic classification accuracy | — | ~99.7% |
-| Average flow latency | baseline | ~15% lower |
-| Peak link utilization | baseline | ~39% lower |
-| Congested / dropped flows | 23 | 0 |
-
-The adaptive controller trades a small amount of routing simplicity for a
-large reduction in congestion and drops — because it can see current load
-*and* forecast future load, while static routing is blind to both.
-
-## 6. Project structure
+## How it works
 
 ```
-├── index.html               ← open this to present the project
-├── requirements.txt
-├── src/
-│   ├── topology.py           network topology (Mininet-style)
-│   ├── traffic_gen.py        synthetic flow/traffic generator
-│   ├── ml_models.py          traffic classifier + congestion predictor
-│   ├── controller_sim.py     static vs adaptive routing simulation
-│   ├── run_experiment.py     runs everything, exports results
-│   ├── template.html         dashboard template (results get injected here)
-│   │                         ── routing study (section 8) ──
-│   ├── netsim.py             flow-level simulator (queueing delay, loss, failures)
-│   ├── routing.py            all routing strategies (baselines + hybrids)
-│   ├── scenarios.py          link failure / hotspot / silent degradation events
-│   ├── hybrid_experiment.py  round 1 driver (campus topology, normal traffic)
-│   ├── scenario_experiment.py rounds 2–3 driver (scenarios, NSFNET, validation)
-│   └── export_dashboard.py   writes the round-3 results into index.html
-├── results/
-│   ├── results.json          all metrics behind the dashboard
-│   ├── topology.png          rendered topology diagram
-│   ├── hybrid/               round 1 results
-│   ├── hybrid_v2/            round 2 results
-│   └── hybrid_v3/            round 3 results (campus8/, nsfnet14/, validation/)
-└── mininet_sdn/               ← a REAL Mininet + OVS + OpenFlow deployment
-    ├── README_MININET.md      setup + how to run it on your own machine
-    ├── network_topo.py        builds the actual Mininet topology
-    ├── controller_static.py   real baseline SDN controller (non-adaptive)
-    ├── controller_adaptive.py real AI-driven SDN controller
-    ├── run_demo.sh            one-command demo (static or adaptive)
-    └── sample_run_logs/       real captured output, in case you can't run it live
+ Flow stats  ─▶ [1] Traffic classifier (Random Forest)
+ (switches)         voice / video / web / bulk  →  QoS priority
+                              │
+ Link history ─▶ [2] Congestion predictor (Random Forest regressor)
+                    next-interval utilization per link
+                              │
+                              ▼
+                [3] Path computation (Dijkstra, re-weighted per flow)
+                    cost = base delay
+                         + priority × (35·current_util³ + 12·forecast_util³)
+                              │
+                              ▼
+                [4] Per-hop OpenFlow flow-mods pushed to switches
 ```
 
-## 7. Two ways to explore this project
+The static baseline routes on base delay alone, so it never reacts to load.
+The adaptive controller recomputes the path for each new flow, using live
+utilization plus the ML forecast, and gives voice and video traffic a more
+conservative cost.
 
-This project ships in two layers, and it's worth being clear about which is
-which when you present it:
+## Routing study
 
-- **`src/` — a fast, large-scale simulation.** Pure Python (networkx +
-  scikit-learn), no real network stack. Lets you sweep 24 controller
-  intervals and dozens of flows in seconds, which is what the dashboard's
-  quantitative comparison (`index.html`) is built from.
-- **`mininet_sdn/` — a real SDN deployment.** Actual Mininet switches, real
-  Open vSwitch, a real OpenFlow controller (`os-ken`) making live routing
-  decisions from real port/flow statistics. Slower to run and smaller in
-  scope (a handful of flows, not 24 intervals), but it's the real thing —
-  see `mininet_sdn/README_MININET.md` for a captured example where the
-  AI-driven controller detects real congestion on a live link and reroutes
-  a new flow around it while the baseline controller doesn't.
-
-Presenting both makes the strongest case: the simulation shows the idea
-holds up quantitatively at scale, and the Mininet deployment proves the
-same logic runs as a real, working SDN controller.
-
-## 8. Routing study: eight strategies, two networks
-
-The original controller above uses a single hand-made Dijkstra cost
-function. A second, more rigorous study asks which routing design is best:
-it compares eight strategies, from static shortest-path to reinforcement
-learning, on two networks and four scenarios. It lives in `src/netsim.py`,
-`src/routing.py`, `src/scenarios.py` and the two experiment drivers, and is
-shown in section 05 ("Routing study") of `index.html`, where you can switch
-network, scenario and metric.
-
-### Setup
-
-- **Simulator** (`netsim.py`): long-lived flows with Poisson, diurnal
-  arrivals; M/M/1-style queueing delay and overload loss on every link.
-- **Topologies**: the 8-switch campus network (`campus8`) and the 14-node
-  NSFNET backbone (`nsfnet14`), to check that results generalise.
-- **Scenarios** (`scenarios.py`): normal traffic at 5 load levels, plus
-  link failures (port-down + rerouting), a flash-crowd hotspot, and a
-  *silent* link degradation the controller cannot see in its capacity view.
-- **Strategies compared** (`routing.py`):
+The original controller uses one hand-made cost function. The routing study
+tests which routing design works best: eight strategies, two networks, four
+scenarios. It is also shown in the dashboard's "Routing study" section, where
+you can switch network, scenario and metric.
 
 | Strategy | What it does |
 |---|---|
-| Static Dijkstra | fixed shortest path (OSPF-like) |
-| ECMP | random choice among equal-cost shortest paths |
-| Load-aware Dijkstra | the original controller: cost grows with current + forecast load |
+| Static Dijkstra | Fixed shortest path (OSPF-like) |
+| ECMP | Random choice among equal-cost shortest paths |
+| Load-aware Dijkstra | The original controller: cost grows with current + forecast load |
 | Telemetry-aware Dijkstra | Load-aware + measured delay/loss on each link |
-| **Best fixed-profile Dijkstra** | **main method:** class-aware, telemetry-aware cost profile (one for voice/video, one for web/bulk), chosen on validation data |
-| Q-Routing | reinforcement learning only (ablation) |
+| **Best fixed-profile Dijkstra** | **Main method:** class-aware, telemetry-aware cost profile (one for voice/video, one for web/bulk), chosen on validation data |
+| Q-Routing | Reinforcement learning only (ablation) |
 | Hybrid path-selection QL | k-shortest Dijkstra candidates, Q-learning picks one (ablation) |
 | Hybrid QL-tuned Dijkstra | Q-learning picks Dijkstra's cost profile per traffic group and network state (ablation) |
 
-- **Fair evaluation**: every strategy sees identical arrivals and the same ML
-  predictions. Training, validation and test runs use disjoint random seeds;
+**Setup**
+
+- **Simulator** ([`netsim.py`](src/netsim.py)): long-lived flows with
+  Poisson, diurnal arrivals; M/M/1-style queueing delay and overload loss on
+  every link.
+- **Topologies**: the 8-switch campus network (`campus8`) and the 14-node
+  NSFNET backbone (`nsfnet14`).
+- **Scenarios** ([`scenarios.py`](src/scenarios.py)): normal traffic at 5
+  load levels, link failures, a flash-crowd hotspot, and a *silent* link
+  degradation that the controller's capacity view cannot see.
+- **Fair evaluation**: every strategy sees identical arrivals and the same
+  ML predictions. Training, validation and test runs use disjoint seeds, and
   every setting was chosen on validation seeds only. Results are averaged
-  over 10 test seeds, with paired Wilcoxon tests (p < 0.05) and 95% CIs.
-  The significance tests compare Best fixed-profile Dijkstra with every
-  other strategy in each of the 11 scenario × load test cells.
+  over 10 test seeds, with paired Wilcoxon tests (p < 0.05) and 95% CIs
+  across 11 scenario × load cells.
 
-### Results in brief
+**Findings**
 
-- All Dijkstra-based adaptive methods beat Static Dijkstra, ECMP and
-  Q-Routing by a wide margin (for example, on campus8 under normal load,
-  mean latency 8.7–9.2 ms vs 32.7 ms for Static Dijkstra and 50.4 ms for
-  Q-Routing). Pure RL routing performs worst.
-- **Best fixed-profile Dijkstra is the strongest strategy.** Against
-  Load-aware and Telemetry-aware Dijkstra it is never significantly worse,
-  in any test cell, on any metric, on either network. Against Load-aware
-  Dijkstra it gives significantly lower voice/video latency in 6/11 cells
-  (campus8) and 10/11 (NSFNET), and fairer link load in 9/11 on both.
-  Its profile was chosen only on campus8 validation data, so the NSFNET
-  results are a genuine out-of-sample check.
-- SLA violations vs Load-aware Dijkstra fall by 13% (campus8) and 19%
-  (NSFNET) on average per test cell. On NSFNET the gain is consistent
-  (10/11 cells significant). On campus8 it comes almost entirely from the
-  silent-degradation scenario (the median cell improves by only 1.5%).
-- The telemetry term is what helps under silent degradation (campus8 mean
-  latency 12.8 ms → 9.8 ms for Telemetry-aware vs Load-aware).
-- **Negative result:** learning did not add anything on top of a
-  well-chosen cost profile. The two Q-learning hybrids mostly *tie*
-  Load-aware Dijkstra and never significantly beat the fixed profile on mean
-  or voice/video latency (they do edge it in a few NSFNET cells on p95
-  latency, SLA or fairness); on NSFNET the QL-tuned Dijkstra is significantly slower than
-  Load-aware Dijkstra in 7 of 11 cells. Likely causes: each traffic group is
-  rewarded only for its own flows, and the tabular Q estimates are sparse
-  and noisy.
+- Against Load-aware Dijkstra, Best fixed-profile Dijkstra gives
+  significantly lower voice/video latency in 6/11 cells (campus8) and 10/11
+  (NSFNET), and fairer link load in 9/11 on both. Its profile was chosen
+  only on campus8 validation data, so the NSFNET results are an
+  out-of-sample check.
+- SLA violations against Load-aware Dijkstra fall by 13% (campus8) and 19%
+  (NSFNET) on average per test cell. On campus8 the gain comes almost
+  entirely from the silent-degradation scenario; the median cell improves by
+  only 1.5%.
+- The telemetry term is what helps under silent degradation: campus8 mean
+  latency drops from 12.8 ms (Load-aware) to 9.8 ms (Telemetry-aware).
+- The two Q-learning hybrids mostly *tie* Load-aware Dijkstra and never
+  significantly beat the fixed profile on mean or voice/video latency. On
+  NSFNET, QL-tuned Dijkstra is significantly slower than Load-aware
+  Dijkstra in 7 of 11 cells. Likely causes: each traffic group is rewarded
+  only for its own flows, and the tabular Q estimates are sparse and noisy.
 
 Full tables, significance tests and figures are in
-`results/hybrid_v3/<topology>/results_tables.md`. Earlier rounds are in
-`results/hybrid/` and `results/hybrid_v2/`; they still use the original
-"proposed" labels, and the v2 NSFNET run was stopped early (only its log
-remains) and superseded by v3.
+`results/hybrid_v3/<topology>/results_tables.md`. Earlier rounds are kept in
+`results/hybrid/` and `results/hybrid_v2/`. They use the original "proposed"
+labels, and the v2 NSFNET run was stopped early and superseded by v3.
 
-### Reproducing
+**Reproducing**
 
 ```bash
 cd src
 python scenario_experiment.py --quick          # smoke test, a few minutes
 python scenario_experiment.py --validate       # choose the fixed profile (validation seeds)
-python scenario_experiment.py --topo campus8   # full test run (long)
+python scenario_experiment.py --topo campus8   # full test run (long, memory-heavy)
 python scenario_experiment.py --topo nsfnet14
-python scenario_experiment.py --rebuild        # redo tables/tests/figures from saved runs (fast)
-python export_dashboard.py                     # update the routing-study section of index.html
+python scenario_experiment.py --rebuild        # tables/tests/figures from saved runs (fast)
+python export_dashboard.py                     # write the study into index.html
 ```
 
-The full runs take a while and use a lot of memory; run them in a normal
-terminal rather than in the background.
+## Real deployment (Mininet + Open vSwitch)
 
-### Dashboard regression checks
+[`mininet_sdn/`](mininet_sdn/) runs the same idea as real OpenFlow 1.3
+controllers on Linux. The demo saturates the `s2–s4` link with a 60 Mbps
+bulk transfer, then opens a voice flow from `h2` to `h5`:
 
-With Node.js installed, run `node --test tests/dashboard.test.mjs`. These
-dependency-free checks verify the embedded datasets, repeated high-DPI chart
-sizing, and the original browser simulation's light, typical, and heavy-load
-baselines. They do not require the Python ML packages or a running server.
+```
+[static]   10.0.0.2 -> 10.0.0.5 routed via switches [2, 4, 7]               # through the busy link
+[adaptive] 10.0.0.2:50331 -> 10.0.0.5:5060 class=voice priority=1 path=[2, 5, 7]   # around it
+```
+
+The setup steps, the full captured logs and the known limitations
+(hardcoded topology, port-based classification at flow setup) are in
+[`mininet_sdn/README_MININET.md`](mininet_sdn/README_MININET.md).
+
+## Repository layout
+
+```
+├── index.html                 dashboard (self-contained; open directly or via GitHub Pages)
+├── Makefile                   common tasks: experiment, test, serve, export
+├── requirements.txt           Python dependencies for src/
+├── src/
+│   ├── topology.py            campus8 + NSFNET topologies (Mininet-style)
+│   ├── traffic_gen.py         synthetic flow generator (4 traffic classes)
+│   ├── ml_models.py           traffic classifier + congestion predictor
+│   ├── controller_sim.py      original static vs adaptive simulation
+│   ├── run_experiment.py      runs it, writes results/results.json
+│   ├── netsim.py              flow-level simulator (queueing, loss, failures)
+│   ├── routing.py             all eight routing strategies
+│   ├── scenarios.py           failure / hotspot / silent-degradation events
+│   ├── hybrid_experiment.py   study round 1
+│   ├── scenario_experiment.py study rounds 2–3 (scenarios, NSFNET, validation)
+│   ├── export_dashboard.py    writes round-3 results into index.html
+│   └── template.html          original dashboard template (pre-redesign)
+├── results/                   committed outputs behind every number above
+├── mininet_sdn/               real Mininet + OVS + os-ken deployment
+└── tests/
+    ├── test_simulation.py     Python regression tests (unittest)
+    └── dashboard.test.mjs     dashboard data + engine tests (node --test)
+```
+
+## Testing
+
+```bash
+make test
+# or separately:
+python -m unittest discover -s tests -v
+node --test tests/
+```
+
+The dashboard tests use no dependencies. They check that the data embedded
+in `index.html` matches the committed result files, that charts keep their
+size at high DPI, and that the browser simulator still reproduces its
+reference runs. CI runs both suites on every push and pull request.
+
+## Limitations
+
+- The study traffic is synthetic. Classifier accuracy and the latency gains
+  have not been measured on production traces.
+- The Mininet controllers use a hardcoded topology (no LLDP discovery) and
+  classify flows by port at setup time. The ML classifier runs on live flow
+  stats but does not yet trigger mid-flow migration.
+- The simulator is flow-level (M/M/1-style queueing), not packet-level.
+
+## Roadmap
+
+These items are planned and not built yet:
+
+- [ ] LLDP topology discovery in the `os-ken` controllers
+- [ ] Use the live classifier output to migrate established flows
+- [ ] Ship Best fixed-profile Dijkstra in the real controller (it currently runs Load-aware)
+- [ ] Evaluate on public traffic traces instead of synthetic flows
+- [ ] Controller REST API plus a live telemetry view in the dashboard
+- [ ] Container image for the Mininet demo
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)

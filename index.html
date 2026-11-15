@@ -8,6 +8,11 @@
       name="description"
       content="Explore AI-driven network routing. Compare eight strategies across two networks, inspect the experiments, and run an SDN traffic simulation in your browser."
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Flowstate — AI-SDN Traffic Management" />
+    <meta property="og:description" content="Compare eight SDN routing strategies across two networks and run an adaptive-routing simulation in your browser." />
+    <meta property="og:url" content="https://anushreekasturi.github.io/AI-SDN-Traffic-Management/" />
+    <meta name="twitter:card" content="summary" />
     <title>Flowstate — AI-SDN Traffic Management</title>
     <link
       rel="icon"
@@ -918,6 +923,187 @@
       }
       .t {
         color: var(--muted);
+      }
+      .strategy-guide {
+        margin-top: 19px;
+      }
+      .strategy-guide .table-scroll {
+        padding: 4px 13px 14px;
+      }
+      .strategy-guide table {
+        font-family: var(--font);
+        font-size: 11px;
+      }
+      .strategy-guide td {
+        vertical-align: middle;
+      }
+      .strategy-guide td button,
+      .html-legend button {
+        all: unset;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 5px;
+      }
+      .strategy-guide td button {
+        color: var(--text);
+        font-weight: 600;
+        padding: 3px 4px;
+        margin: -3px -4px;
+      }
+      .strategy-guide td button:focus-visible,
+      .html-legend button:focus-visible {
+        outline: 2px solid var(--purple);
+        outline-offset: 2px;
+      }
+      .strategy-guide i,
+      .html-legend i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .strategy-guide tr.ref td button {
+        color: var(--purple);
+      }
+      .strategy-guide tr.focus td {
+        background: #aba1ff12;
+      }
+      .strategy-guide tbody tr:hover td {
+        background: #ffffff06;
+      }
+      .strategy-guide td.what {
+        color: var(--muted);
+        min-width: 260px;
+      }
+      .strategy-guide .num {
+        text-align: right;
+        font-family: var(--mono);
+        white-space: nowrap;
+      }
+      .strategy-guide .num small {
+        color: #7d7f98;
+        font-size: 9px;
+      }
+      .role {
+        font-size: 9px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .role-main {
+        color: var(--purple);
+        border-color: #aba1ff55;
+      }
+      .role-adaptive {
+        color: var(--cyan);
+        border-color: #83d6e344;
+      }
+      .role-ablation {
+        color: var(--peach);
+        border-color: #ffb58744;
+      }
+      .html-legend button {
+        color: var(--muted);
+        gap: 5px;
+      }
+      .html-legend button:hover,
+      .html-legend button[aria-pressed="true"] {
+        color: var(--text);
+      }
+      .html-legend button.dim {
+        opacity: 0.45;
+      }
+      .chart-frame.has-hover {
+        position: relative;
+      }
+      .chart-crosshair {
+        position: absolute;
+        top: 0;
+        bottom: 22px;
+        width: 1px;
+        background: #f1f0fa40;
+        pointer-events: none;
+      }
+      .chart-tip {
+        position: absolute;
+        top: 4px;
+        z-index: 2;
+        min-width: 130px;
+        padding: 8px 10px;
+        background: #0c0d15ee;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        font-family: var(--mono);
+        font-size: 10px;
+        line-height: 1.7;
+        pointer-events: none;
+      }
+      .chart-tip b {
+        display: block;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .chart-tip span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .chart-tip i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .chart-tip em {
+        margin-left: auto;
+        padding-left: 12px;
+        font-style: normal;
+        color: var(--text);
+      }
+      pre.log-panel {
+        margin: 0;
+        white-space: pre;
+      }
+      .log-panel .ok {
+        color: var(--green);
+      }
+      .log-panel .bad {
+        color: var(--peach);
+      }
+      .log-panel .dimline {
+        color: #6f7290;
+      }
+      @media (max-width: 700px) {
+        .strategy-guide thead {
+          display: none;
+        }
+        .strategy-guide table,
+        .strategy-guide tbody {
+          display: block;
+        }
+        .strategy-guide tr {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 4px 10px;
+          padding: 12px 0;
+          border-top: 1px solid var(--border);
+        }
+        .strategy-guide td {
+          border: 0;
+          padding: 0 6px;
+        }
+        .strategy-guide td.what {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          min-width: 0;
+        }
+        .strategy-guide td:nth-child(3) {
+          grid-row: 3;
+        }
       }
       .study-insight {
         display: flex;
@@ -2518,12 +2704,40 @@
                   id="studySweepChart"
                   height="237"
                   role="img"
-                  aria-label="Mean latency across five offered load levels for six routing strategies"
+                  aria-label="Mean latency across five offered load levels for all eight routing strategies; hover or tap for values"
                 ></canvas>
               </div>
-              <div id="sweepLegend" class="html-legend"></div>
+              <div id="sweepLegend" class="html-legend" role="group" aria-label="Highlight a strategy"></div>
             </article>
           </div>
+          <article class="panel strategy-guide">
+            <div class="panel-head">
+              <div>
+                <h3>The eight strategies</h3>
+                <p>
+                  What each one does, and how it scored on the selection above.
+                  Select a strategy to highlight it in both charts.
+                </p>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <caption class="sr-only">
+                  Routing strategies compared in the study, their role, and
+                  their score on the selected network, scenario, and metric
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Strategy</th>
+                    <th scope="col">What it does</th>
+                    <th scope="col">Role</th>
+                    <th scope="col" class="num" id="strategyMetricHead">Mean latency (ms)</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyBody"></tbody>
+              </table>
+            </div>
+          </article>
           <div class="study-stat-line">
             <span
               ><strong class="highlight" id="stHeadLat">70.0%</strong>lower
@@ -2939,8 +3153,8 @@
               <h2 id="realTitle">Beyond the simulation.</h2>
               <p>
                 The same routing idea, on real Mininet switches, Open vSwitch,
-                and OpenFlow 1.3. These are captured controller logs from the
-                included demonstration.
+                and OpenFlow 1.3. Below are excerpts of controller logs captured from the included
+                demonstration (full logs in <code>mininet_sdn/sample_run_logs/</code>).
               </p>
             </div>
             <a
@@ -2960,12 +3174,12 @@
                 </h3>
                 <span class="terminal-label">Follows the fixed path</span>
               </div>
-              <div class="log-panel">
-                $ controller_static bulk h2 → h4 [s2, s4, s7, s6] voice h2 → h5
-                [s2, s4, s7]
+              <pre class="log-panel"><span class="dimline">[static] loaded topology: 8 switches, 12 links, 6 hosts
+[static] switch connected: dpid=1 … dpid=8</span>
+[static] 10.0.0.2 -> 10.0.0.4 routed via switches [2, 4, 7, 6]
+<span class="bad">[static] 10.0.0.2 -> 10.0.0.5 routed via switches [2, 4, 7]</span>
 
-                <strong>Both flows take the busy s2–s4 link.</strong>
-              </div>
+<strong># bulk h2→h4 and voice h2→h5 share the busy s2–s4 link</strong></pre>
             </article>
             <article class="panel terminal adaptive">
               <div class="log-head">
@@ -2975,12 +3189,13 @@
                 </h3>
                 <span class="terminal-label">Finds another way</span>
               </div>
-              <div class="log-panel">
-                $ controller_adaptive bulk h2 → h4 [s2, s4, s7, s6] voice h2 →
-                h5 [s2, s5, s7]
+              <pre class="log-panel"><span class="dimline">[adaptive] loaded pretrained traffic classifier
+[adaptive] loaded topology: 8 switches, 12 links, 6 hosts</span>
+[adaptive] 10.0.0.2:55367 -> 10.0.0.4:5001 class=bulk priority=4 path=[2, 4, 7, 6]
+[adaptive][live-ML] flow classified as 'bulk' (demand=43.96Mbps, pkt_size=1512B)
+<span class="ok">[adaptive] 10.0.0.2:50331 -> 10.0.0.5:5060 class=voice priority=1 path=[2, 5, 7]</span>
 
-                <strong>Voice takes the alternate s2–s5 path.</strong>
-              </div>
+<strong># voice avoids s2–s4 and takes s2–s5</strong></pre>
             </article>
           </div>
           <p class="source-note">
@@ -3048,16 +3263,22 @@ function setupCanvas(canvas) {
   return { ctx, width: cssW, height: cssH };
 }
 
-function drawLineChart(canvas, { labels, series, yMax, noLegend }) {
+function drawLineChart(canvas, { labels, series, yMax, noLegend, tipLabel }) {
   const { ctx, width, height } = setupCanvas(canvas);
   ctx.clearRect(0, 0, width, height);
   const padL = 38, padR = 10, padT = 24, padB = 22;
   const plotW = width - padL - padR, plotH = height - padT - padB;
   const n = labels.length;
   const allVals = series.flatMap(s => s.data).filter(v => isFinite(v));
-  const maxV = yMax !== undefined ? yMax : Math.max(1, ...allVals) * 1.15;
+  // round the axis up to a 1/2/5 step so ticks read 0, 25, 50... instead of 0, 30, 61...
+  const rawMax = yMax !== undefined ? yMax : Math.max(1, ...allVals) * 1.1;
+  const mag = 10 ** Math.floor(Math.log10(rawMax / 4));
+  const tickStep = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map(m => m * mag).find(s => s * 4 >= rawMax);
+  const maxV = tickStep * 4;
   const xAt = i => padL + (n <= 1 ? 0 : plotW * (i / (n - 1)));
   const yAt = v => padT + plotH - plotH * (Math.max(0, v) / (maxV || 1));
+  canvas._chart = { labels, series, xAt, padL, plotW, n, tipLabel };
+  attachChartHover(canvas);
 
   ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
   ctx.fillStyle = tickColor; ctx.font = '10px IBM Plex Mono, monospace';
@@ -3065,7 +3286,7 @@ function drawLineChart(canvas, { labels, series, yMax, noLegend }) {
     const y = padT + plotH - (plotH * i / 4);
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(Math.round(maxV * i / 4), padL - 6, y);
+    ctx.fillText(+(tickStep * i).toFixed(2), padL - 6, y);
   }
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   const step = Math.max(1, Math.ceil(n / 8));
@@ -3080,11 +3301,13 @@ function drawLineChart(canvas, { labels, series, yMax, noLegend }) {
     }
   });
   series.forEach(s => {
-    ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.globalAlpha = s.alpha ?? 1;
+    ctx.strokeStyle = s.color; ctx.lineWidth = s.width ?? 2; ctx.beginPath();
     s.data.forEach((v, i) => { const x = xAt(i), y = yAt(v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
     ctx.stroke();
     ctx.fillStyle = s.color;
-    s.data.forEach((v, i) => { const x = xAt(i), y = yAt(v); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill(); });
+    s.data.forEach((v, i) => { const x = xAt(i), y = yAt(v); ctx.beginPath(); ctx.arc(x, y, (s.width ?? 2) + 0.2, 0, Math.PI * 2); ctx.fill(); });
+    ctx.globalAlpha = 1;
   });
 
   if (noLegend) return;
@@ -3095,6 +3318,34 @@ function drawLineChart(canvas, { labels, series, yMax, noLegend }) {
     ctx.fillStyle = '#F1F0FA'; ctx.fillText(s.name, lx + 12, 10);
     lx += ctx.measureText(s.name).width + 30;
   });
+}
+
+// Hover/touch readout for line charts: a crosshair plus every series' value at the nearest x.
+function attachChartHover(canvas) {
+  if (canvas._hover) return;
+  const frame = canvas.parentElement;
+  frame.classList.add('has-hover');
+  const line = document.createElement('div'); line.className = 'chart-crosshair';
+  const tip = document.createElement('div'); tip.className = 'chart-tip'; tip.setAttribute('aria-hidden', 'true');
+  frame.append(line, tip);
+  const hide = () => { line.hidden = tip.hidden = true; };
+  const show = e => {
+    const c = canvas._chart; if (!c || !c.n) return;
+    const x = e.clientX - canvas.getBoundingClientRect().left;
+    const i = Math.max(0, Math.min(c.n - 1, Math.round((x - c.padL) / (c.plotW / Math.max(1, c.n - 1)))));
+    const px = c.xAt(i) + canvas.offsetLeft;
+    line.style.left = px + 'px';
+    tip.innerHTML = `<b>${c.tipLabel ? c.tipLabel(c.labels[i]) : c.labels[i]}</b>` + c.series.map(s =>
+      `<span><i style="background:${s.color}"></i>${s.name}<em>${isFinite(s.data[i]) ? (+s.data[i]).toFixed(1) : '–'}</em></span>`).join('');
+    line.hidden = tip.hidden = false;
+    const left = px + 12 + tip.offsetWidth > frame.clientWidth ? px - 12 - tip.offsetWidth : px + 12;
+    tip.style.left = Math.max(0, left) + 'px';
+  };
+  canvas.addEventListener('pointermove', show);
+  canvas.addEventListener('pointerdown', show);
+  canvas.addEventListener('pointerleave', hide);
+  hide();
+  canvas._hover = true;
 }
 
 function drawHBarChart(canvas, { labels, data, color }) {
@@ -3208,10 +3459,22 @@ const STUDY_METRICS = {
   jain_fairness: ["Link-load fairness (Jain)", "0–1", "higher"],
 };
 const SWEEP_COLORS = {
-  "Static Dijkstra": "#FFB587", "ECMP": "#A78BFA", "Load-aware Dijkstra": "#83D6E3",
-  "Q-Routing (RL only)": "#EB99B2", "Hybrid QL-tuned Dijkstra": "#A4A5BB", "Best fixed-profile Dijkstra": "#ABA1FF",
+  "Static Dijkstra": "#FFB587", "ECMP": "#F2D27A", "Load-aware Dijkstra": "#83D6E3",
+  "Telemetry-aware Dijkstra": "#6FA8FF", "Q-Routing (RL only)": "#EB99B2", "Hybrid path-selection QL": "#7FD89A",
+  "Hybrid QL-tuned Dijkstra": "#A4A5BB", "Best fixed-profile Dijkstra": "#ABA1FF",
 };
-const studyState = { topo: "campus8", scen: "normal", metric: "mean_latency_ms" };
+// [role, what it does] — mirrors the strategy table in README.md section 8
+const STRATEGY_INFO = {
+  "Static Dijkstra": ["Baseline", "Fixed shortest path (OSPF-like)."],
+  "ECMP": ["Baseline", "Random choice among equal-cost shortest paths."],
+  "Load-aware Dijkstra": ["Adaptive", "The original controller: cost grows with current + forecast load."],
+  "Telemetry-aware Dijkstra": ["Adaptive", "Load-aware + measured delay/loss on each link."],
+  "Best fixed-profile Dijkstra": ["Main method", "Class-aware, telemetry-aware cost profile (one for voice/video, one for web/bulk), chosen on validation data."],
+  "Q-Routing (RL only)": ["Ablation", "Reinforcement learning only."],
+  "Hybrid path-selection QL": ["Ablation", "k-shortest Dijkstra candidates; Q-learning picks one."],
+  "Hybrid QL-tuned Dijkstra": ["Ablation", "Q-learning picks Dijkstra's cost profile per traffic group and network state."],
+};
+const studyState = { topo: "campus8", scen: "normal", metric: "mean_latency_ms", focus: null };
 
 function drawStrategyBars(canvas, rows, ref, digits) {
   const { ctx, width, height } = setupCanvas(canvas);
@@ -3225,7 +3488,9 @@ function drawStrategyBars(canvas, rows, ref, digits) {
   rows.forEach((r, i) => {
     const y = padT + gap * i + (gap - barH) / 2;
     const w = plotW * (r.v / maxV);
-    ctx.fillStyle = r.name === ref ? '#ABA1FF' : '#494561';
+    const focus = studyState.focus;
+    ctx.fillStyle = r.name === focus ? SWEEP_COLORS[r.name] : r.name === ref ? '#ABA1FF' : '#494561';
+    ctx.globalAlpha = focus && r.name !== focus ? 0.45 : 1;
     ctx.beginPath();
     ctx.roundRect ? ctx.roundRect(padL, y, Math.max(1, w), barH, 4) : ctx.rect(padL, y, Math.max(1, w), barH);
     ctx.fill();
@@ -3234,13 +3499,14 @@ function drawStrategyBars(canvas, rows, ref, digits) {
       ctx.strokeStyle = '#F1F0FA'; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(x0, ym); ctx.lineTo(x1, ym);
       ctx.moveTo(x0, ym - 4); ctx.lineTo(x0, ym + 4); ctx.moveTo(x1, ym - 4); ctx.lineTo(x1, ym + 4);
-      ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.stroke(); ctx.globalAlpha = focus && r.name !== focus ? 0.45 : 1;
     }
     ctx.textBaseline = 'middle';
     ctx.fillStyle = r.name === ref ? '#ABA1FF' : tickColor; ctx.textAlign = 'right';
     ctx.fillText(r.label, padL - 8, y + barH / 2);
     ctx.fillStyle = '#F1F0FA'; ctx.textAlign = 'left';
     ctx.fillText(r.v.toFixed(digits), padL + plotW * ((r.v + r.ci) / maxV) + 6, y + barH / 2);
+    ctx.globalAlpha = 1;
   });
 }
 
@@ -3279,12 +3545,31 @@ function renderStudy() {
   bar();
 
   // load sweep (normal traffic)
-  const names = Object.keys(SWEEP_COLORS);
-  const series = names.map(n => ({ name: SHORT[n], data: T.sweep[n], color: SWEEP_COLORS[n] }));
+  const names = HYBRID.order;
+  const focus = studyState.focus;
+  const series = names.map(n => ({
+    name: SHORT[n], data: T.sweep[n], color: SWEEP_COLORS[n],
+    width: n === focus || (!focus && n === HYBRID.reference) ? 3 : 1.6,
+    alpha: focus && n !== focus ? 0.25 : 1,
+  }));
   document.getElementById('sweepLegend').innerHTML = names.map(n =>
-    `<span><i style="background:${SWEEP_COLORS[n]}"></i>${SHORT[n]}</span>`).join('');
+    `<button type="button" data-strategy="${n}" aria-pressed="${n === focus}"${focus && n !== focus ? ' class="dim"' : ''}><i style="background:${SWEEP_COLORS[n]}"></i>${SHORT[n]}</button>`).join('');
+
+  // strategy guide: what each one does + its value on the current selection
+  document.getElementById('strategyMetricHead').textContent = `${mLabel} (${mUnit})`;
+  const digits = studyState.metric === 'jain_fairness' ? 2 : 1;
+  document.getElementById('strategyBody').innerHTML = HYBRID.order.map(n => {
+    const [role, what] = STRATEGY_INFO[n] || ['', ''];
+    const [v, ci] = S[n][studyState.metric];
+    return `<tr class="${n === HYBRID.reference ? 'ref' : ''}${n === focus ? ' focus' : ''}">
+      <td><button type="button" data-strategy="${n}" aria-pressed="${n === focus}"><i style="background:${SWEEP_COLORS[n]}"></i>${n}</button></td>
+      <td class="what">${what}</td>
+      <td><span class="role role-${role.split(' ')[0].toLowerCase()}">${role}</span></td>
+      <td class="num">${v.toFixed(digits)} <small>±${ci.toFixed(digits)}</small></td></tr>`;
+  }).join('');
   const sweep = () => drawLineChart(document.getElementById('studySweepChart'),
-                                    { labels: T.loads.map(String), series, noLegend: true });
+                                    { labels: T.loads.map(String), series, noLegend: true,
+                                      tipLabel: l => `Load level ${l} · mean latency (ms)` });
   sweep();
   studyRedraw = () => { bar(); sweep(); };
 
@@ -3311,6 +3596,16 @@ if (HYBRID) {
   sel.innerHTML = Object.entries(STUDY_METRICS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('');
   sel.value = studyState.metric;
   sel.addEventListener('change', () => { studyState.metric = sel.value; renderStudy(); });
+  // clicking a strategy (table row or legend) highlights it in both charts; click again to clear
+  const pickStrategy = e => {
+    const b = e.target.closest('button[data-strategy]'); if (!b) return;
+    const n = b.dataset.strategy;
+    studyState.focus = studyState.focus === n ? null : n;
+    renderStudy();
+    e.currentTarget.querySelector(`button[data-strategy="${CSS.escape(n)}"]`)?.focus({ preventScroll: true });
+  };
+  document.getElementById('strategyBody').addEventListener('click', pickStrategy);
+  document.getElementById('sweepLegend').addEventListener('click', pickStrategy);
   // losses vs. the two non-learning adaptive baselines, over both networks and all reported metrics
   let losses = 0;
   Object.values(HYBRID.topologies).forEach(T =>

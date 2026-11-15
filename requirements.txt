@@ -1,5 +1,8 @@
+# Simulation + routing study (src/). The Mininet controllers have their own
+# list in mininet_sdn/requirements.txt.
 networkx>=3.0
 scikit-learn>=1.3
 pandas>=2.0
 numpy>=1.24
+scipy>=1.10
 matplotlib>=3.7

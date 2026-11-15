@@ -1,6 +1,19 @@
+# Python
 __pycache__/
 *.pyc
-# smoke-test output
+.venv/
+venv/
+
+# Node (only used for optional browser screenshots)
+node_modules/
+
+# smoke-test and tooling output
 results/*/_quick/
-output/playwright/
+output/
 .playwright-cli/
+mininet_sdn/controller_*.log
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
