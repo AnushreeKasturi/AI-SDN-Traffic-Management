@@ -3,11 +3,14 @@ scenario_experiment.py
 Third round of the hybrid-routing study (results in ../results/hybrid_v3/;
 the v2 campus run is kept in ../results/hybrid_v2/).
 
-v3: the proposed method is QTunedDijkstra (routing.py) - Q-learning chooses
-Dijkstra's link-cost profile per traffic group and network state. The v2
-path-selection hybrid is kept as an ablation, and a "best fixed profile"
-Dijkstra (the best single profile pair, chosen on validation seeds) checks
-whether learning beats simply tuning the constants.
+v3 compares QTunedDijkstra (routing.py: Q-learning chooses Dijkstra's
+link-cost profile per traffic group and network state), the v2
+path-selection hybrid, and a "best fixed profile" Dijkstra (the best single
+class-aware profile pair, chosen on validation seeds).
+
+Outcome: the best fixed-profile Dijkstra is the strongest method, so it is
+the reference every other strategy is tested against; the two Q-learning
+hybrids did not beat it and are reported as ablations.
 
 What it adds over hybrid_experiment.py (v1, results kept in results/hybrid/):
     - a second, larger topology (NSFNET, 14 nodes / 21 core links)
@@ -28,6 +31,7 @@ and all strategies are evaluated on the same TEST seeds.
     python scenario_experiment.py --topo campus8       # full test run, one topology
     python scenario_experiment.py --topo nsfnet14
     python scenario_experiment.py --quick              # smoke test
+    python scenario_experiment.py --rebuild            # redo tables/tests/figures from saved runs
 """
 
 import argparse
@@ -65,22 +69,26 @@ ALPHA = 0.1
 BALANCE = 0.5
 BALANCE_GRID = [0.0, 0.25, 0.5, 1.0, 2.0]
 
-PROPOSED = QTunedDijkstra.name
-PATH_QL = "Hybrid path-selection QL (v2, ablation)"
+QTUNED = QTunedDijkstra.name
+PATH_QL = "Hybrid path-selection QL"
 FIXED = "Best fixed-profile Dijkstra"
+REFERENCE = FIXED          # strongest method; significance tests compare it with every other strategy
 ORDER = [StaticDijkstra.name, ECMP.name, LoadAwareDijkstra.name, TelemetryAwareDijkstra.name,
-         FIXED, QRouting.name, PATH_QL, PROPOSED]
+         QRouting.name, PATH_QL, QTUNED, FIXED]
+# names the saved v3 runs were written under, before the results were reframed
+OLD_NAMES = {"Hybrid QL-tuned Dijkstra (proposed)": QTUNED,
+             "Hybrid path-selection QL (v2, ablation)": PATH_QL}
 COLORS = {
-    PROPOSED: "#2a78d6",
+    FIXED: "#2a78d6",
     StaticDijkstra.name: "#eb6834",
     ECMP.name: "#1baf7a",
     LoadAwareDijkstra.name: "#eda100",
     QRouting.name: "#e87ba4",
     TelemetryAwareDijkstra.name: "#8a63d2",
     PATH_QL: "#7fa9dc",
-    FIXED: "#5a5955",
+    QTUNED: "#5a5955",
 }
-MARKERS = {PROPOSED: "o", StaticDijkstra.name: "s", ECMP.name: "^", LoadAwareDijkstra.name: "D",
+MARKERS = {QTUNED: "o", StaticDijkstra.name: "s", ECMP.name: "^", LoadAwareDijkstra.name: "D",
            QRouting.name: "v", TelemetryAwareDijkstra.name: "P", PATH_QL: "X", FIXED: "*"}
 SCEN_LABEL = {"normal": "Normal", "failure": "Link failures", "hotspot": "Flash-crowd hotspot",
               "degraded": "Silent link degradation"}
@@ -281,25 +289,7 @@ def evaluate(topo, args):
     tl = pd.DataFrame(timelines)
     tl.to_csv(os.path.join(out, "timelines.csv"), index=False)
 
-    metrics = list(METRICS)
-    agg_rows = []
-    for (kind, level, name), g in raw.groupby(["scenario", "load", "strategy"]):
-        r = dict(scenario=kind, load=level, strategy=name)
-        for m in metrics:
-            r[f"{m}_mean"] = float(g[m].mean())
-            r[f"{m}_ci"] = ci95(g[m])
-        agg_rows.append(r)
-    agg = pd.DataFrame(agg_rows)
-    agg.to_csv(os.path.join(out, "summary.csv"), index=False)
-
-    tests = significance(raw)
-    tests.to_csv(os.path.join(out, "significance_tests.csv"), index=False)
-
-    write_tables(raw, tests, out, topo)
-    plot_load_sweep(agg, out)
-    plot_events(agg, out)
-    plot_timelines(tl, raw, out)
-    plot_learning(curve, out)
+    report(raw, tl, curve, out, topo)
 
     with open(os.path.join(out, "run_info.json"), "w") as f:
         json.dump(dict(topology=topo, load_levels=LOAD_LEVELS, event_loads=EVENT_LOADS, n_intervals=N_INTERVALS,
@@ -313,24 +303,67 @@ def evaluate(topo, args):
     print(f"[{topo}] saved to {os.path.abspath(out)} ({time.time() - t_start:.0f}s)", flush=True)
 
 
+def aggregate(raw):
+    agg_rows = []
+    for (kind, level, name), g in raw.groupby(["scenario", "load", "strategy"]):
+        r = dict(scenario=kind, load=level, strategy=name)
+        for m in METRICS:
+            r[f"{m}_mean"] = float(g[m].mean())
+            r[f"{m}_ci"] = ci95(g[m])
+        agg_rows.append(r)
+    return pd.DataFrame(agg_rows)
+
+
+def report(raw, tl, curve, out, topo):
+    """Summary, significance tests, tables and figures from the per-seed runs."""
+    agg = aggregate(raw)
+    agg.to_csv(os.path.join(out, "summary.csv"), index=False)
+    tests = significance(raw)
+    tests.to_csv(os.path.join(out, "significance_tests.csv"), index=False)
+    write_tables(raw, tests, out, topo)
+    plot_load_sweep(agg, out)
+    plot_events(agg, out)
+    plot_timelines(tl, raw, out)
+    plot_learning(curve, out)
+
+
+def rebuild(topo):
+    """Redo everything downstream of the simulations from the saved per-seed
+    runs (no re-simulation), renaming strategies saved under their old names."""
+    out = os.path.join(OUT_DIR, topo)
+    raw = pd.read_csv(os.path.join(out, "raw_runs.csv")).replace({"strategy": OLD_NAMES})
+    tl = pd.read_csv(os.path.join(out, "timelines.csv")).replace({"strategy": OLD_NAMES})
+    raw.to_csv(os.path.join(out, "raw_runs.csv"), index=False)
+    tl.to_csv(os.path.join(out, "timelines.csv"), index=False)
+    info_path = os.path.join(out, "run_info.json")
+    with open(info_path) as f:
+        info = json.load(f)
+    info["learning_curve"] = {OLD_NAMES.get(k, k): v for k, v in info["learning_curve"].items()}
+    with open(info_path, "w") as f:
+        json.dump(info, f, indent=2)
+    report(raw, tl, info["learning_curve"], out, topo)
+    print(f"[{topo}] rebuilt {os.path.abspath(out)}", flush=True)
+
+
 def significance(raw):
+    """Paired Wilcoxon tests of REFERENCE against every other strategy, per scenario x load cell."""
     tests = []
     for (kind, level), cell in raw.groupby(["scenario", "load"]):
-        hyb = cell[cell["strategy"] == PROPOSED].sort_values("seed")
+        ref = cell[cell["strategy"] == REFERENCE].sort_values("seed")
         for name in ORDER:
-            if name == PROPOSED:
+            if name == REFERENCE:
                 continue
             base = cell[cell["strategy"] == name].sort_values("seed")
             for m, (_, better) in METRICS.items():
                 if m == "decision_us":
                     continue
-                a, b = hyb[m].values, base[m].values
+                a, b = ref[m].values, base[m].values
                 gain = (b.mean() - a.mean()) if better == "lower" else (a.mean() - b.mean())
                 tests.append(dict(
-                    scenario=kind, load=level, baseline=name, metric=m,
-                    hybrid_mean=float(a.mean()), baseline_mean=float(b.mean()), abs_gain=float(gain),
+                    scenario=kind, load=int(level), method=REFERENCE, baseline=name, metric=m,
+                    method_mean=float(a.mean()), baseline_mean=float(b.mean()), abs_gain=float(gain),
                     improvement_pct=float(gain / abs(b.mean()) * 100) if abs(b.mean()) >= MIN_BASE_FOR_PCT else np.nan,
-                    hybrid_wins_seeds=int(((a < b) if better == "lower" else (a > b)).sum()),
+                    method_wins_seeds=int(((a < b) if better == "lower" else (a > b)).sum()),
                     p_value=wilcoxon_p(a, b)))
     return pd.DataFrame(tests)
 
@@ -342,7 +375,7 @@ def write_tables(raw, tests, out, topo):
         f.write(f"# Results — {topo}\n\nMeans over test seeds (and over loads within a scenario).\n\n")
         for kind in SCENARIOS:
             d = raw[raw["scenario"] == kind].groupby("strategy")[cols].mean().reindex(ORDER)
-            loads = sorted(raw[raw["scenario"] == kind]["load"].unique())
+            loads = ", ".join(str(int(x)) for x in sorted(raw[raw["scenario"] == kind]["load"].unique()))
             f.write(f"## {SCEN_LABEL[kind]} (loads {loads})\n\n")
             f.write("| Strategy | " + " | ".join(METRICS[m][0] for m in cols) + " |\n")
             f.write("|---" * (len(cols) + 1) + "|\n")
@@ -350,10 +383,12 @@ def write_tables(raw, tests, out, topo):
                 f.write(f"| {name} | " + " | ".join(f"{r[m]:.2f}" for m in cols) + " |\n")
             f.write("\n")
 
-        f.write("## Proposed vs. strongest baselines (paired Wilcoxon, p < 0.05)\n\n")
-        f.write("Cells = scenario × load. 'win' = significantly better, 'loss' = significantly worse.\n\n")
-        f.write("| Baseline | Metric | wins | ties | losses |\n|---|---|---|---|---|\n")
-        for base in [LoadAwareDijkstra.name, TelemetryAwareDijkstra.name, FIXED, PATH_QL]:
+        n_cells = tests.groupby(["scenario", "load"]).ngroups
+        f.write(f"## {REFERENCE} vs. the other adaptive strategies (paired Wilcoxon, p < 0.05)\n\n")
+        f.write(f"Cells = scenario × load ({n_cells} in total). 'wins' = {REFERENCE} is "
+                "significantly better, 'losses' = significantly worse.\n\n")
+        f.write("| Compared with | Metric | wins | ties | losses |\n|---|---|---|---|---|\n")
+        for base in [LoadAwareDijkstra.name, TelemetryAwareDijkstra.name, PATH_QL, QTUNED]:
             for m in ["mean_latency_ms", "p95_latency_ms", "realtime_latency_ms", "loss_pct",
                       "sla_violation_pct", "jain_fairness"]:
                 t = tests[(tests["baseline"] == base) & (tests["metric"] == m)]
@@ -375,7 +410,7 @@ def plot_load_sweep(agg, out):
         fig, ax = plt.subplots(figsize=(5.4, 3.7))
         for name in ORDER:
             d = d0[d0["strategy"] == name].sort_values("load")
-            is_p = name == PROPOSED
+            is_p = name == REFERENCE
             ax.errorbar(d["load"], d[f"{metric}_mean"], yerr=d[f"{metric}_ci"], label=name,
                         color=COLORS[name], marker=MARKERS[name], markersize=6 if is_p else 4.5,
                         linewidth=2.2 if is_p else 1.3, capsize=3, zorder=3 if is_p else 2)
@@ -416,7 +451,7 @@ def plot_events(agg, out):
 def plot_timelines(tl, raw, out):
     if tl.empty:
         return
-    names = [LoadAwareDijkstra.name, TelemetryAwareDijkstra.name, FIXED, PATH_QL, PROPOSED]
+    names = [LoadAwareDijkstra.name, TelemetryAwareDijkstra.name, PATH_QL, QTUNED, FIXED]
     marks = {"failure": [(12, "A down"), (20, "B down"), (28, "A up")],
              "hotspot": [(15, "start"), (27, "end")], "degraded": [(10, "degraded")]}
     for kind in marks:
@@ -425,7 +460,7 @@ def plot_timelines(tl, raw, out):
         for name in names:
             s = d[d["strategy"] == name].groupby("t")["latency_ms"].mean()
             ax.plot(s.index, s.values, label=name, color=COLORS[name],
-                    linewidth=2.2 if name == PROPOSED else 1.3)
+                    linewidth=2.2 if name == REFERENCE else 1.3)
         for t, lab in marks[kind]:
             ax.axvline(t, color="#8a8984", linewidth=0.8, linestyle="--")
             ax.text(t + 0.3, ax.get_ylim()[1] * 0.95, lab, fontsize=6.5, color="#5a5955", va="top")
@@ -465,6 +500,7 @@ def main():
     ap.add_argument("--train-episodes", type=int, default=80)
     ap.add_argument("--validate", action="store_true")
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--rebuild", action="store_true", help="redo tables/tests/figures from saved runs")
     args = ap.parse_args()
     global OUT_DIR
     if args.quick:
@@ -476,7 +512,10 @@ def main():
         validate(args)
         return
     for topo in (TOPOLOGIES if args.topo == "all" else [args.topo]):
-        evaluate(topo, args)
+        if args.rebuild:
+            rebuild(topo)
+        else:
+            evaluate(topo, args)
 
 
 if __name__ == "__main__":

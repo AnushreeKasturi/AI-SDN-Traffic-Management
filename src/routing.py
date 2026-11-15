@@ -369,7 +369,7 @@ class QTunedDijkstra(Strategy):
     fixed=(a_rt, a_el) disables learning (used for the "best fixed profile"
     baseline, chosen on validation seeds).
     """
-    name = "Hybrid QL-tuned Dijkstra (proposed)"
+    name = "Hybrid QL-tuned Dijkstra"
     learns = True
     PROFILES = [(s, tau) for tau in (0.0, 1.0) for s in (0.5, 1.0, 2.0, 4.0)]
     DEFAULT = 1                                   # (1.0, 0.0) = Load-aware Dijkstra

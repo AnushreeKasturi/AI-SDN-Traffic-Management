@@ -57,7 +57,8 @@
   .brand{font-family:var(--font-mono); font-size:14px; color:var(--text); display:flex; gap:9px; align-items:center;}
   .brand b{color:var(--teal);}
   nav .links{display:flex; gap:26px; font-size:13.5px; font-family:var(--font-mono);}
-  nav .links a{color:var(--muted); text-decoration:none;}
+  nav .links a{color:var(--muted); text-decoration:none; white-space:nowrap;}
+  @media (max-width:1100px){ nav .links{gap:16px; overflow-x:auto; max-width:65vw;} }
   nav .links a:hover{color:var(--text);}
 
   /* ---------- HERO ---------- */
@@ -150,6 +151,21 @@
   td.diag{color:var(--green); font-weight:700;}
   td.name{text-align:left; color:var(--muted); text-transform:capitalize;}
 
+  /* ---------- routing study ---------- */
+  .study-controls{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:20px;}
+  .seg{display:inline-flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel);}
+  .seg button{font-family:var(--font-mono); font-size:12px; color:var(--muted); background:transparent; border:none; padding:9px 13px; cursor:pointer;}
+  .seg button + button{border-left:1px solid var(--line);}
+  .seg button.on{background:rgba(45,212,191,.14); color:var(--teal);}
+  .seg button:focus-visible, #selMetric:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  #selMetric{font-family:var(--font-mono); font-size:12px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:9px 12px;}
+  .html-legend{display:flex; flex-wrap:wrap; gap:6px 16px; font-family:var(--font-mono); font-size:11px; color:var(--text); margin-bottom:8px;}
+  .html-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .html-legend i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .table-scroll{overflow-x:auto;}
+  #wtlBody .w{color:var(--green);} #wtlBody .l{color:var(--red);} #wtlBody .t{color:var(--muted);}
+  #wtlBody td{white-space:nowrap;}
+
   /* ---------- footer ---------- */
   footer{border-top:1px solid var(--line); padding:32px 0; color:var(--muted); font-size:12.5px; font-family:var(--font-mono);}
   footer .wrap{display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
@@ -157,6 +173,8 @@
   @media (max-width:920px){
     .hero-grid{grid-template-columns:1fr;}
     .grid-2,.grid-3{grid-template-columns:1fr;}
+    .demo-controls{grid-template-columns:1fr;}
+    .wrap{padding:0 16px;}
     .arch{grid-template-columns:1fr; }
     .arrow{transform:rotate(90deg); padding:4px 0;}
   }
@@ -175,6 +193,7 @@
       <a href="#topology">Topology</a>
       <a href="#ml">ML Model</a>
       <a href="#results">Results</a>
+      <a href="#study">Routing study</a>
       <a href="#demo">Try it</a>
       <a href="#realdeploy">Real Deployment</a>
       <a href="#conclusion">Conclusion</a>
@@ -333,9 +352,60 @@
   </div>
 </section>
 
+<section class="border-top" id="study">
+  <div class="wrap">
+    <div class="eyebrow">05 &middot; Routing study</div>
+    <h2>Eight routing strategies, two networks, four scenarios</h2>
+    <p class="section-sub">A larger, stricter follow-up to the comparison above. Every strategy sees identical traffic and the same ML predictions. Settings were chosen on validation seeds only, and results are averaged over <span id="stSeeds">10</span> separate test seeds, with paired Wilcoxon tests (p&nbsp;&lt;&nbsp;0.05).</p>
+
+    <div class="grid grid-3" style="margin-bottom:22px;">
+      <div class="card"><div class="metric-num" id="stHeadLat">&mdash;</div><div class="metric-label">lower mean latency than static Dijkstra (best strategy, all cells)</div></div>
+      <div class="card"><div class="metric-num" id="stHeadSla">&mdash;</div><div class="metric-label">test cells with significantly lower voice/video latency than load-aware Dijkstra</div></div>
+      <div class="card"><div class="metric-num amber" id="stHeadLoss">&mdash;</div><div class="metric-label">significant losses vs. load- or telemetry-aware Dijkstra, either network</div></div>
+    </div>
+
+    <div class="study-controls">
+      <div class="seg" id="segTopo" role="group" aria-label="Network"></div>
+      <div class="seg" id="segScen" role="group" aria-label="Scenario"></div>
+      <select id="selMetric" aria-label="Metric"></select>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="chart-card">
+        <h3 id="stBarTitle">Mean latency by strategy</h3>
+        <div class="sub" id="stBarSub">Averaged over the scenario's load levels; whiskers are 95% CIs over test seeds.</div>
+        <canvas id="studyBarChart" height="300"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Mean latency as load grows (normal traffic)</h3>
+        <div class="sub">Offered load = mean new flows per interval. Lower is better.</div>
+        <div class="html-legend" id="sweepLegend"></div>
+        <canvas id="studySweepChart" height="266"></canvas>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3>Best fixed-profile Dijkstra vs. the other adaptive strategies</h3>
+      <p>Each cell counts scenario &times; load test cells (<span id="stCells">11</span> per network) as significantly better / tied / significantly worse for best fixed-profile Dijkstra.</p>
+      <div class="table-scroll">
+        <table style="margin-top:14px;">
+          <thead id="wtlHead"></thead>
+          <tbody id="wtlBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:20px;">
+      <div class="card"><h3>Adaptive Dijkstra wins big</h3><p>Every Dijkstra variant that reacts to load beats static shortest-path, ECMP and pure RL routing by a wide margin, on both networks and in every scenario.</p></div>
+      <div class="card"><h3>A class-aware cost is the best design</h3><p>Best fixed-profile Dijkstra uses one link-cost profile for voice/video and another for web/bulk, chosen on validation data. It is the strongest strategy overall and never loses significantly to load- or telemetry-aware Dijkstra, even on NSFNET, which played no part in choosing it.</p></div>
+      <div class="card"><h3>Learning did not add more</h3><p>Two Q-learning hybrids (an ablation) mostly tie load-aware Dijkstra and do not beat the fixed profile. Pure Q-Routing is the worst strategy tested. Telemetry helps most when a link degrades silently.</p></div>
+    </div>
+  </div>
+</section>
+
 <section class="border-top" id="demo">
   <div class="wrap">
-    <div class="eyebrow">05 &middot; Try it yourself</div>
+    <div class="eyebrow">06 &middot; Try it yourself</div>
     <h2>Run the controller on your own traffic</h2>
     <p class="section-sub">The chart above is one saved run. This panel actually recomputes routing in your browser &mdash; same topology, same static-vs-adaptive Dijkstra logic from <code>controller_sim.py</code> &mdash; every time you change the inputs and hit Run.</p>
 
@@ -384,7 +454,7 @@
 
 <section class="border-top" id="realdeploy">
   <div class="wrap">
-    <div class="eyebrow">05 &middot; Real deployment</div>
+    <div class="eyebrow">07 &middot; Real deployment</div>
     <h2>Validated on an actual SDN stack</h2>
     <p class="section-sub">Beyond the simulation above, the same routing logic runs as a real controller against real Mininet switches, real Open vSwitch, and real OpenFlow 1.3 messages (via <code>os-ken</code>, the maintained Ryu-API-compatible framework). This is the captured output of an actual run: the <code>s2&ndash;s4</code> link is saturated with a real 60&nbsp;Mbps bulk transfer, then a new latency-sensitive flow is opened while that congestion is happening.</p>
     <div class="grid grid-2">
@@ -410,12 +480,13 @@
 
 <section class="border-top" id="conclusion">
   <div class="wrap">
-    <div class="eyebrow">05 &middot; Takeaways</div>
+    <div class="eyebrow">08 &middot; Takeaways</div>
     <h2>What this demonstrates</h2>
-    <div class="grid grid-3">
+    <div class="grid grid-2">
       <div class="card"><h3>Traffic-aware routing works</h3><p>Knowing whether a flow is voice or bulk transfer &mdash; and treating it differently &mdash; measurably cuts latency for delay-sensitive traffic.</p></div>
       <div class="card"><h3>Prediction beats reaction</h3><p>Forecasting link utilization one step ahead lets the controller avoid congestion before it happens, rather than after packets are already dropped.</p></div>
       <div class="card"><h3>SDN makes it possible</h3><p>A centralized controller with a global view can recompute optimal paths per-flow in real time &mdash; something distributed static protocols like OSPF cannot do.</p></div>
+      <div class="card"><h3>Simple, well-tuned beats learned</h3><p>In the routing study, a class-aware Dijkstra cost profile chosen on validation data beat both Q-learning hybrids and pure RL routing &mdash; and held up on a second network it was never tuned on.</p></div>
     </div>
   </div>
 </section>
@@ -454,7 +525,7 @@ function setupCanvas(canvas) {
   return { ctx, width: cssW, height: cssH };
 }
 
-function drawLineChart(canvas, { labels, series, yMax }) {
+function drawLineChart(canvas, { labels, series, yMax, noLegend }) {
   const { ctx, width, height } = setupCanvas(canvas);
   ctx.clearRect(0, 0, width, height);
   const padL = 38, padR = 10, padT = 24, padB = 22;
@@ -493,6 +564,7 @@ function drawLineChart(canvas, { labels, series, yMax }) {
     s.data.forEach((v, i) => { const x = xAt(i), y = yAt(v); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill(); });
   });
 
+  if (noLegend) return;
   ctx.font = '11px JetBrains Mono, monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   let lx = padL;
   series.forEach(s => {
@@ -586,6 +658,141 @@ chartRedraws.push(renderFeatureChart);
 
 } catch (chartErr) {
   console.error("Saved-run charts failed to render:", chartErr);
+}
+
+try {
+
+/* =====================================================================
+   ROUTING STUDY — round 3 of the hybrid study (results/hybrid_v3/).
+   The data block is written by src/export_dashboard.py.
+   ===================================================================== */
+/* HYBRID-DATA */const HYBRID = {"reference":"Best fixed-profile Dijkstra","order":["Static Dijkstra","ECMP","Load-aware Dijkstra","Telemetry-aware Dijkstra","Q-Routing (RL only)","Hybrid path-selection QL","Hybrid QL-tuned Dijkstra","Best fixed-profile Dijkstra"],"compared":["Load-aware Dijkstra","Telemetry-aware Dijkstra","Hybrid path-selection QL","Hybrid QL-tuned Dijkstra"],"scenario_labels":{"normal":"Normal","failure":"Link failures","hotspot":"Flash-crowd hotspot","degraded":"Silent link degradation"},"topologies":{"campus8":{"label":"Campus (8 switches)","scenarios":{"normal":{"Static Dijkstra":{"mean_latency_ms":[32.711,3.683],"p95_latency_ms":[91.723,9.877],"realtime_latency_ms":[31.68,3.663],"loss_pct":[12.886,2.459],"sla_violation_pct":[29.184,3.571],"jain_fairness":[0.353,0.007]},"ECMP":{"mean_latency_ms":[15.616,1.632],"p95_latency_ms":[49.881,6.078],"realtime_latency_ms":[14.69,1.601],"loss_pct":[4.978,1.121],"sla_violation_pct":[14.54,2.75],"jain_fairness":[0.482,0.013]},"Load-aware Dijkstra":{"mean_latency_ms":[8.856,0.601],"p95_latency_ms":[21.81,2.347],"realtime_latency_ms":[8.715,0.611],"loss_pct":[0.349,0.118],"sla_violation_pct":[3.001,0.921],"jain_fairness":[0.634,0.02]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[9.018,0.585],"p95_latency_ms":[21.398,2.019],"realtime_latency_ms":[8.857,0.547],"loss_pct":[0.363,0.147],"sla_violation_pct":[3.067,0.768],"jain_fairness":[0.635,0.021]},"Q-Routing (RL only)":{"mean_latency_ms":[50.349,4.735],"p95_latency_ms":[138.55,13.103],"realtime_latency_ms":[47.496,4.193],"loss_pct":[16.561,2.607],"sla_violation_pct":[38.897,3.712],"jain_fairness":[0.555,0.017]},"Hybrid path-selection QL":{"mean_latency_ms":[9.18,0.563],"p95_latency_ms":[21.697,1.74],"realtime_latency_ms":[8.898,0.544],"loss_pct":[0.516,0.153],"sla_violation_pct":[3.611,0.705],"jain_fairness":[0.605,0.02]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[9.125,0.576],"p95_latency_ms":[21.671,1.792],"realtime_latency_ms":[8.978,0.57],"loss_pct":[0.398,0.133],"sla_violation_pct":[3.461,0.804],"jain_fairness":[0.625,0.023]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[8.725,0.546],"p95_latency_ms":[20.781,0.751],"realtime_latency_ms":[8.377,0.526],"loss_pct":[0.348,0.14],"sla_violation_pct":[2.867,0.804],"jain_fairness":[0.648,0.02]}},"failure":{"Static Dijkstra":{"mean_latency_ms":[24.806,6.219],"p95_latency_ms":[91.315,13.489],"realtime_latency_ms":[23.656,6.21],"loss_pct":[8.677,3.516],"sla_violation_pct":[23.257,8.216],"jain_fairness":[0.479,0.019]},"ECMP":{"mean_latency_ms":[20.988,4.114],"p95_latency_ms":[65.06,15.449],"realtime_latency_ms":[20.132,4.33],"loss_pct":[7.876,2.665],"sla_violation_pct":[22.75,6.152],"jain_fairness":[0.493,0.023]},"Load-aware Dijkstra":{"mean_latency_ms":[13.545,3.683],"p95_latency_ms":[37.675,12.438],"realtime_latency_ms":[13.428,3.728],"loss_pct":[1.941,1.904],"sla_violation_pct":[9.339,5.569],"jain_fairness":[0.66,0.018]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[14.207,3.62],"p95_latency_ms":[38.853,12.799],"realtime_latency_ms":[14.121,3.676],"loss_pct":[2.28,1.931],"sla_violation_pct":[10.477,5.43],"jain_fairness":[0.66,0.016]},"Q-Routing (RL only)":{"mean_latency_ms":[59.917,5.394],"p95_latency_ms":[168.358,14.936],"realtime_latency_ms":[57.472,5.086],"loss_pct":[18.424,1.382],"sla_violation_pct":[48.213,3.978],"jain_fairness":[0.62,0.022]},"Hybrid path-selection QL":{"mean_latency_ms":[14.178,3.893],"p95_latency_ms":[42.528,15.15],"realtime_latency_ms":[13.95,3.909],"loss_pct":[2.403,1.976],"sla_violation_pct":[10.621,5.704],"jain_fairness":[0.621,0.018]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[13.573,3.804],"p95_latency_ms":[39.457,12.814],"realtime_latency_ms":[13.431,3.857],"loss_pct":[2.131,1.884],"sla_violation_pct":[9.275,5.688],"jain_fairness":[0.662,0.023]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[13.324,3.665],"p95_latency_ms":[37.364,13.417],"realtime_latency_ms":[12.936,3.759],"loss_pct":[1.916,1.823],"sla_violation_pct":[8.745,5.464],"jain_fairness":[0.685,0.018]}},"hotspot":{"Static Dijkstra":{"mean_latency_ms":[40.764,5.825],"p95_latency_ms":[110.974,15.055],"realtime_latency_ms":[39.054,6.117],"loss_pct":[17.452,4.077],"sla_violation_pct":[40.781,6.239],"jain_fairness":[0.385,0.021]},"ECMP":{"mean_latency_ms":[19.364,2.094],"p95_latency_ms":[61.354,12.657],"realtime_latency_ms":[17.871,1.993],"loss_pct":[7.096,1.439],"sla_violation_pct":[20.926,3.58],"jain_fairness":[0.525,0.026]},"Load-aware Dijkstra":{"mean_latency_ms":[11.409,1.799],"p95_latency_ms":[34.432,6.659],"realtime_latency_ms":[10.905,1.631],"loss_pct":[1.295,0.658],"sla_violation_pct":[7.021,2.751],"jain_fairness":[0.702,0.017]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[11.847,1.883],"p95_latency_ms":[35.828,8.168],"realtime_latency_ms":[11.435,1.747],"loss_pct":[1.391,0.711],"sla_violation_pct":[7.653,2.826],"jain_fairness":[0.704,0.015]},"Q-Routing (RL only)":{"mean_latency_ms":[61.862,7.097],"p95_latency_ms":[168.678,17.325],"realtime_latency_ms":[58.647,7.535],"loss_pct":[20.886,3.158],"sla_violation_pct":[50.903,4.194],"jain_fairness":[0.614,0.027]},"Hybrid path-selection QL":{"mean_latency_ms":[12.209,1.755],"p95_latency_ms":[37.965,9.63],"realtime_latency_ms":[11.557,1.667],"loss_pct":[1.487,0.653],"sla_violation_pct":[8.254,2.628],"jain_fairness":[0.672,0.017]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[11.729,1.811],"p95_latency_ms":[34.157,8.695],"realtime_latency_ms":[11.245,1.659],"loss_pct":[1.377,0.721],"sla_violation_pct":[7.444,2.871],"jain_fairness":[0.702,0.017]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[11.659,1.682],"p95_latency_ms":[35.502,7.887],"realtime_latency_ms":[10.932,1.558],"loss_pct":[1.251,0.592],"sla_violation_pct":[7.279,2.487],"jain_fairness":[0.718,0.017]}},"degraded":{"Static Dijkstra":{"mean_latency_ms":[40.267,7.067],"p95_latency_ms":[104.83,12.843],"realtime_latency_ms":[39.061,7.248],"loss_pct":[22.812,8.893],"sla_violation_pct":[53.083,7.939],"jain_fairness":[0.321,0.038]},"ECMP":{"mean_latency_ms":[16.64,2.49],"p95_latency_ms":[54.172,7.13],"realtime_latency_ms":[15.45,2.297],"loss_pct":[6.447,2.186],"sla_violation_pct":[26.462,7.285],"jain_fairness":[0.473,0.025]},"Load-aware Dijkstra":{"mean_latency_ms":[12.794,2.875],"p95_latency_ms":[43.563,13.407],"realtime_latency_ms":[12.394,2.905],"loss_pct":[4.199,1.787],"sla_violation_pct":[24.624,6.197],"jain_fairness":[0.565,0.027]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[9.834,1.516],"p95_latency_ms":[25.416,8.58],"realtime_latency_ms":[9.454,1.396],"loss_pct":[1.481,0.777],"sla_violation_pct":[13.406,4.019],"jain_fairness":[0.631,0.019]},"Q-Routing (RL only)":{"mean_latency_ms":[57.425,7.302],"p95_latency_ms":[161.467,19.012],"realtime_latency_ms":[54.395,7.232],"loss_pct":[20.364,3.689],"sla_violation_pct":[59.739,7.014],"jain_fairness":[0.55,0.019]},"Hybrid path-selection QL":{"mean_latency_ms":[10.377,1.68],"p95_latency_ms":[29.558,11.897],"realtime_latency_ms":[10.051,1.64],"loss_pct":[1.887,0.906],"sla_violation_pct":[17.172,4.627],"jain_fairness":[0.592,0.016]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[11.297,2.1],"p95_latency_ms":[34.237,13.008],"realtime_latency_ms":[11.039,2.221],"loss_pct":[2.266,0.965],"sla_violation_pct":[19.059,4.888],"jain_fairness":[0.61,0.023]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[9.41,1.034],"p95_latency_ms":[26.737,9.984],"realtime_latency_ms":[8.654,0.876],"loss_pct":[1.535,0.576],"sla_violation_pct":[11.142,3.054],"jain_fairness":[0.636,0.022]}}},"loads":[2,3,4,6,8],"sweep":{"Static Dijkstra":[7.41,14.29,23.63,49.78,68.45],"ECMP":[7.09,10.29,13.04,18.56,29.09],"Load-aware Dijkstra":[6.14,6.6,7.51,8.28,15.75],"Telemetry-aware Dijkstra":[6.16,6.57,7.17,8.36,16.83],"Q-Routing (RL only)":[12.69,23.64,40.84,68.71,105.86],"Hybrid path-selection QL":[6.25,6.55,7.13,8.35,17.63],"Hybrid QL-tuned Dijkstra":[6.12,6.54,7.36,8.39,17.21],"Best fixed-profile Dijkstra":[6.12,6.55,7.08,8.34,15.54]},"wtl":{"Load-aware Dijkstra":{"mean_latency_ms":[2,9,0],"realtime_latency_ms":[6,5,0],"sla_violation_pct":[3,8,0],"jain_fairness":[9,2,0]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[2,9,0],"realtime_latency_ms":[7,4,0],"sla_violation_pct":[2,9,0],"jain_fairness":[5,6,0]},"Hybrid path-selection QL":{"mean_latency_ms":[2,9,0],"realtime_latency_ms":[4,7,0],"sla_violation_pct":[3,8,0],"jain_fairness":[10,1,0]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[4,7,0],"realtime_latency_ms":[7,4,0],"sla_violation_pct":[3,8,0],"jain_fairness":[8,3,0]}},"headline":{"latency_vs_static_pct":70.0,"sla_vs_loadaware_pct":29.2,"n_cells":11,"n_seeds":10}},"nsfnet14":{"label":"NSFNET (14 nodes)","scenarios":{"normal":{"Static Dijkstra":{"mean_latency_ms":[40.54,3.558],"p95_latency_ms":[103.852,12.365],"realtime_latency_ms":[38.792,3.333],"loss_pct":[11.199,1.87],"sla_violation_pct":[32.274,3.522],"jain_fairness":[0.292,0.005]},"ECMP":{"mean_latency_ms":[29.944,1.947],"p95_latency_ms":[68.594,7.804],"realtime_latency_ms":[28.835,1.718],"loss_pct":[7.612,1.688],"sla_violation_pct":[26.989,3.025],"jain_fairness":[0.319,0.008]},"Load-aware Dijkstra":{"mean_latency_ms":[18.797,0.544],"p95_latency_ms":[32.05,2.394],"realtime_latency_ms":[18.691,0.58],"loss_pct":[0.272,0.09],"sla_violation_pct":[9.967,1.194],"jain_fairness":[0.503,0.02]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[19.032,0.629],"p95_latency_ms":[32.578,2.554],"realtime_latency_ms":[18.917,0.643],"loss_pct":[0.265,0.086],"sla_violation_pct":[10.468,1.312],"jain_fairness":[0.509,0.019]},"Q-Routing (RL only)":{"mean_latency_ms":[75.673,5.029],"p95_latency_ms":[199.759,18.891],"realtime_latency_ms":[72.178,4.342],"loss_pct":[15.096,2.705],"sla_violation_pct":[61.321,2.477],"jain_fairness":[0.606,0.009]},"Hybrid path-selection QL":{"mean_latency_ms":[18.81,0.797],"p95_latency_ms":[35.852,3.558],"realtime_latency_ms":[18.177,0.82],"loss_pct":[0.315,0.188],"sla_violation_pct":[8.837,1.285],"jain_fairness":[0.437,0.012]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[19.577,0.677],"p95_latency_ms":[33.864,1.85],"realtime_latency_ms":[19.513,0.686],"loss_pct":[0.346,0.138],"sla_violation_pct":[11.537,1.324],"jain_fairness":[0.524,0.018]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[18.256,0.607],"p95_latency_ms":[31.99,2.21],"realtime_latency_ms":[17.422,0.579],"loss_pct":[0.201,0.084],"sla_violation_pct":[8.048,1.165],"jain_fairness":[0.525,0.018]}},"failure":{"Static Dijkstra":{"mean_latency_ms":[38.557,8.216],"p95_latency_ms":[104.049,20.2],"realtime_latency_ms":[36.9,8.028],"loss_pct":[9.717,4.124],"sla_violation_pct":[32.231,7.506],"jain_fairness":[0.359,0.027]},"ECMP":{"mean_latency_ms":[31.951,4.575],"p95_latency_ms":[78.842,13.468],"realtime_latency_ms":[30.685,4.587],"loss_pct":[6.494,2.241],"sla_violation_pct":[28.15,5.395],"jain_fairness":[0.377,0.03]},"Load-aware Dijkstra":{"mean_latency_ms":[20.136,1.36],"p95_latency_ms":[33.734,5.964],"realtime_latency_ms":[20.014,1.386],"loss_pct":[0.325,0.256],"sla_violation_pct":[11.983,2.482],"jain_fairness":[0.536,0.032]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[20.461,1.363],"p95_latency_ms":[36.487,6.55],"realtime_latency_ms":[20.409,1.384],"loss_pct":[0.293,0.246],"sla_violation_pct":[12.449,2.669],"jain_fairness":[0.548,0.032]},"Q-Routing (RL only)":{"mean_latency_ms":[69.954,12.231],"p95_latency_ms":[193.29,38.696],"realtime_latency_ms":[66.037,11.193],"loss_pct":[13.845,4.975],"sla_violation_pct":[60.488,6.984],"jain_fairness":[0.623,0.015]},"Hybrid path-selection QL":{"mean_latency_ms":[20.084,1.241],"p95_latency_ms":[37.463,6.048],"realtime_latency_ms":[19.498,1.271],"loss_pct":[0.331,0.263],"sla_violation_pct":[10.497,2.308],"jain_fairness":[0.479,0.022]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[20.595,1.422],"p95_latency_ms":[36.157,6.958],"realtime_latency_ms":[20.625,1.426],"loss_pct":[0.397,0.331],"sla_violation_pct":[12.714,2.848],"jain_fairness":[0.56,0.027]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[19.784,1.36],"p95_latency_ms":[35.451,6.802],"realtime_latency_ms":[19.026,1.384],"loss_pct":[0.26,0.269],"sla_violation_pct":[10.287,2.687],"jain_fairness":[0.569,0.026]}},"hotspot":{"Static Dijkstra":{"mean_latency_ms":[45.754,6.774],"p95_latency_ms":[124.999,20.214],"realtime_latency_ms":[43.523,6.969],"loss_pct":[14.503,3.955],"sla_violation_pct":[37.238,5.632],"jain_fairness":[0.332,0.021]},"ECMP":{"mean_latency_ms":[32.284,2.73],"p95_latency_ms":[90.262,7.796],"realtime_latency_ms":[30.565,2.821],"loss_pct":[9.756,2.608],"sla_violation_pct":[30.262,4.47],"jain_fairness":[0.366,0.023]},"Load-aware Dijkstra":{"mean_latency_ms":[19.571,1.096],"p95_latency_ms":[43.931,4.581],"realtime_latency_ms":[19.112,1.085],"loss_pct":[0.72,0.309],"sla_violation_pct":[12.042,1.925],"jain_fairness":[0.569,0.019]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[20.406,1.27],"p95_latency_ms":[46.912,2.338],"realtime_latency_ms":[20.016,1.197],"loss_pct":[0.731,0.272],"sla_violation_pct":[13.616,2.333],"jain_fairness":[0.576,0.021]},"Q-Routing (RL only)":{"mean_latency_ms":[101.425,13.649],"p95_latency_ms":[276.485,22.285],"realtime_latency_ms":[95.301,14.515],"loss_pct":[24.852,3.328],"sla_violation_pct":[66.57,5.171],"jain_fairness":[0.658,0.029]},"Hybrid path-selection QL":{"mean_latency_ms":[19.727,1.429],"p95_latency_ms":[44.22,4.978],"realtime_latency_ms":[18.931,1.409],"loss_pct":[0.666,0.34],"sla_violation_pct":[11.647,2.412],"jain_fairness":[0.493,0.016]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[20.569,0.99],"p95_latency_ms":[46.762,1.868],"realtime_latency_ms":[20.101,0.992],"loss_pct":[0.68,0.247],"sla_violation_pct":[14.182,2.132],"jain_fairness":[0.594,0.028]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[19.651,1.191],"p95_latency_ms":[45.482,7.461],"realtime_latency_ms":[18.387,1.113],"loss_pct":[0.532,0.289],"sla_violation_pct":[11.105,1.743],"jain_fairness":[0.594,0.018]}},"degraded":{"Static Dijkstra":{"mean_latency_ms":[43.125,4.5],"p95_latency_ms":[119.425,14.341],"realtime_latency_ms":[41.016,4.42],"loss_pct":[14.362,5.398],"sla_violation_pct":[47.88,7.368],"jain_fairness":[0.283,0.018]},"ECMP":{"mean_latency_ms":[30.191,3.736],"p95_latency_ms":[72.245,15.191],"realtime_latency_ms":[28.651,3.287],"loss_pct":[8.885,4.201],"sla_violation_pct":[34.814,5.669],"jain_fairness":[0.316,0.025]},"Load-aware Dijkstra":{"mean_latency_ms":[21.757,2.564],"p95_latency_ms":[46.372,9.051],"realtime_latency_ms":[21.37,2.462],"loss_pct":[3.204,2.051],"sla_violation_pct":[27.696,6.059],"jain_fairness":[0.464,0.025]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[19.75,1.551],"p95_latency_ms":[39.841,10.571],"realtime_latency_ms":[19.518,1.441],"loss_pct":[1.069,0.671],"sla_violation_pct":[21.095,6.001],"jain_fairness":[0.508,0.018]},"Q-Routing (RL only)":{"mean_latency_ms":[75.967,7.446],"p95_latency_ms":[222.858,28.38],"realtime_latency_ms":[71.618,6.636],"loss_pct":[17.891,4.205],"sla_violation_pct":[69.619,5.508],"jain_fairness":[0.585,0.021]},"Hybrid path-selection QL":{"mean_latency_ms":[20.522,1.794],"p95_latency_ms":[46.365,6.143],"realtime_latency_ms":[19.881,1.937],"loss_pct":[1.755,0.757],"sla_violation_pct":[25.345,6.578],"jain_fairness":[0.431,0.015]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[20.56,1.534],"p95_latency_ms":[40.464,10.402],"realtime_latency_ms":[20.314,1.471],"loss_pct":[1.485,0.945],"sla_violation_pct":[23.646,5.341],"jain_fairness":[0.52,0.019]},"Best fixed-profile Dijkstra":{"mean_latency_ms":[18.8,1.403],"p95_latency_ms":[33.325,8.783],"realtime_latency_ms":[17.868,1.435],"loss_pct":[1.005,0.535],"sla_violation_pct":[19.263,5.335],"jain_fairness":[0.523,0.019]}}},"loads":[2,3,4,6,8],"sweep":{"Static Dijkstra":[16.41,23.09,29.9,51.09,82.21],"ECMP":[18.43,20.47,26.49,35.35,48.98],"Load-aware Dijkstra":[15.83,16.37,17.37,19.21,25.21],"Telemetry-aware Dijkstra":[15.85,16.44,17.4,19.51,25.96],"Q-Routing (RL only)":[33.5,44.97,59.52,88.37,152.01],"Hybrid path-selection QL":[15.7,15.95,16.99,19.05,26.35],"Hybrid QL-tuned Dijkstra":[16.04,17.09,18.26,19.89,26.6],"Best fixed-profile Dijkstra":[15.54,15.98,16.81,18.32,24.63]},"wtl":{"Load-aware Dijkstra":{"mean_latency_ms":[5,6,0],"realtime_latency_ms":[10,1,0],"sla_violation_pct":[10,1,0],"jain_fairness":[9,2,0]},"Telemetry-aware Dijkstra":{"mean_latency_ms":[6,5,0],"realtime_latency_ms":[11,0,0],"sla_violation_pct":[9,2,0],"jain_fairness":[6,5,0]},"Hybrid path-selection QL":{"mean_latency_ms":[2,9,0],"realtime_latency_ms":[4,7,0],"sla_violation_pct":[2,8,1],"jain_fairness":[10,1,0]},"Hybrid QL-tuned Dijkstra":{"mean_latency_ms":[10,1,0],"realtime_latency_ms":[10,1,0],"sla_violation_pct":[11,0,0],"jain_fairness":[2,7,2]}},"headline":{"latency_vs_static_pct":54.6,"sla_vs_loadaware_pct":20.7,"n_cells":11,"n_seeds":10}}}};/* /HYBRID-DATA */
+
+const SHORT = {
+  "Static Dijkstra": "Static", "ECMP": "ECMP", "Load-aware Dijkstra": "Load-aware",
+  "Telemetry-aware Dijkstra": "Telemetry-aware", "Q-Routing (RL only)": "Q-Routing",
+  "Hybrid path-selection QL": "Path-select QL", "Hybrid QL-tuned Dijkstra": "QL-tuned",
+  "Best fixed-profile Dijkstra": "Fixed-profile",
+};
+const STUDY_METRICS = {
+  mean_latency_ms: ["Mean latency", "ms", "lower"],
+  p95_latency_ms: ["95th-percentile latency", "ms", "lower"],
+  realtime_latency_ms: ["Voice/video latency", "ms", "lower"],
+  loss_pct: ["Packet loss", "%", "lower"],
+  sla_violation_pct: ["SLA violations", "% of flows", "lower"],
+  jain_fairness: ["Link-load fairness (Jain)", "0–1", "higher"],
+};
+const SWEEP_COLORS = {
+  "Static Dijkstra": "#F5A524", "ECMP": "#A78BFA", "Load-aware Dijkstra": "#60A5FA",
+  "Q-Routing (RL only)": "#F87171", "Hybrid QL-tuned Dijkstra": "#8CA0BC", "Best fixed-profile Dijkstra": "#2DD4BF",
+};
+const studyState = { topo: "campus8", scen: "normal", metric: "mean_latency_ms" };
+
+function drawStrategyBars(canvas, rows, ref, digits) {
+  const { ctx, width, height } = setupCanvas(canvas);
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = '11px JetBrains Mono, monospace';
+  const padL = Math.min(width * 0.42, 12 + Math.max(...rows.map(r => ctx.measureText(r.label).width)));
+  const padR = 64, padT = 4, padB = 4;
+  const plotW = Math.max(40, width - padL - padR), plotH = height - padT - padB;
+  const gap = plotH / rows.length, barH = Math.min(22, gap * 0.6);
+  const maxV = Math.max(...rows.map(r => r.v + r.ci)) * 1.05 || 1;
+  rows.forEach((r, i) => {
+    const y = padT + gap * i + (gap - barH) / 2;
+    const w = plotW * (r.v / maxV);
+    ctx.fillStyle = r.name === ref ? '#2DD4BF' : '#33476B';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(padL, y, Math.max(1, w), barH, 4) : ctx.rect(padL, y, Math.max(1, w), barH);
+    ctx.fill();
+    if (r.ci > 0) {   // 95% CI whisker
+      const x0 = padL + plotW * ((r.v - r.ci) / maxV), x1 = padL + plotW * ((r.v + r.ci) / maxV), ym = y + barH / 2;
+      ctx.strokeStyle = '#E7EEF7'; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x0, ym); ctx.lineTo(x1, ym);
+      ctx.moveTo(x0, ym - 4); ctx.lineTo(x0, ym + 4); ctx.moveTo(x1, ym - 4); ctx.lineTo(x1, ym + 4);
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = r.name === ref ? '#2DD4BF' : tickColor; ctx.textAlign = 'right';
+    ctx.fillText(r.label, padL - 8, y + barH / 2);
+    ctx.fillStyle = '#E7EEF7'; ctx.textAlign = 'left';
+    ctx.fillText(r.v.toFixed(digits), padL + plotW * ((r.v + r.ci) / maxV) + 6, y + barH / 2);
+  });
+}
+
+function segButtons(el, options, key, onPick) {
+  el.innerHTML = '';
+  Object.entries(options).forEach(([value, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = label; b.dataset.value = value;
+    b.setAttribute('aria-pressed', String(studyState[key] === value));
+    if (studyState[key] === value) b.classList.add('on');
+    b.addEventListener('click', () => { studyState[key] = value; onPick(); });
+    el.appendChild(b);
+  });
+}
+
+function renderStudy() {
+  const T = HYBRID.topologies[studyState.topo];
+  const [mLabel, mUnit, better] = STUDY_METRICS[studyState.metric];
+  const topoOpts = {}; Object.entries(HYBRID.topologies).forEach(([k, v]) => topoOpts[k] = v.label);
+  segButtons(document.getElementById('segTopo'), topoOpts, 'topo', renderStudy);
+  segButtons(document.getElementById('segScen'), HYBRID.scenario_labels, 'scen', renderStudy);
+
+  // bar chart: all strategies, best first
+  const S = T.scenarios[studyState.scen];
+  const rows = HYBRID.order.map(name => ({ name, label: SHORT[name] || name, v: S[name][studyState.metric][0], ci: S[name][studyState.metric][1] }));
+  rows.sort((a, b) => better === 'lower' ? a.v - b.v : b.v - a.v);
+  document.getElementById('stBarTitle').textContent = `${mLabel} (${mUnit}) by strategy`;
+  document.getElementById('stBarSub').textContent =
+    `${T.label}, ${HYBRID.scenario_labels[studyState.scen].toLowerCase()}. ${better === 'lower' ? 'Lower' : 'Higher'} is better; averaged over the scenario's load levels, whiskers are 95% CIs over test seeds.`;
+  const bar = () => drawStrategyBars(document.getElementById('studyBarChart'), rows, HYBRID.reference,
+                                     studyState.metric === 'jain_fairness' ? 2 : 1);
+  bar();
+
+  // load sweep (normal traffic)
+  const names = Object.keys(SWEEP_COLORS);
+  const series = names.map(n => ({ name: SHORT[n], data: T.sweep[n], color: SWEEP_COLORS[n] }));
+  document.getElementById('sweepLegend').innerHTML = names.map(n =>
+    `<span><i style="background:${SWEEP_COLORS[n]}"></i>${SHORT[n]}</span>`).join('');
+  const sweep = () => drawLineChart(document.getElementById('studySweepChart'),
+                                    { labels: T.loads.map(String), series, noLegend: true });
+  sweep();
+  studyRedraw = () => { bar(); sweep(); };
+
+  // win / tie / loss table
+  const wm = ['mean_latency_ms', 'realtime_latency_ms', 'sla_violation_pct', 'jain_fairness'];
+  document.getElementById('wtlHead').innerHTML =
+    '<tr><th style="text-align:left;">vs.</th>' + wm.map(m => `<th>${STUDY_METRICS[m][0]}</th>`).join('') + '</tr>';
+  document.getElementById('wtlBody').innerHTML = HYBRID.compared.map(base =>
+    `<tr><td class="name" style="text-transform:none;">${base}</td>` + wm.map(m => {
+      const [w, t, l] = T.wtl[base][m];
+      return `<td><span class="w">${w}</span> / <span class="t">${t}</span> / <span class="${l ? 'l' : 't'}">${l}</span></td>`;
+    }).join('') + '</tr>').join('');
+
+  const h = T.headline;
+  document.getElementById('stHeadLat').textContent = h.latency_vs_static_pct.toFixed(1) + '%';
+  document.getElementById('stHeadSla').textContent = T.wtl["Load-aware Dijkstra"].realtime_latency_ms[0] + ' / ' + h.n_cells;
+  document.getElementById('stCells').textContent = h.n_cells;
+  document.getElementById('stSeeds').textContent = h.n_seeds;
+}
+
+let studyRedraw = null;
+if (HYBRID) {
+  const sel = document.getElementById('selMetric');
+  sel.innerHTML = Object.entries(STUDY_METRICS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('');
+  sel.value = studyState.metric;
+  sel.addEventListener('change', () => { studyState.metric = sel.value; renderStudy(); });
+  // losses vs. the two non-learning adaptive baselines, over both networks and all reported metrics
+  let losses = 0;
+  Object.values(HYBRID.topologies).forEach(T =>
+    ["Load-aware Dijkstra", "Telemetry-aware Dijkstra"].forEach(b => Object.values(T.wtl[b]).forEach(x => losses += x[2])));
+  document.getElementById('stHeadLoss').textContent = losses;
+  renderStudy();
+  chartRedraws.push(() => studyRedraw && studyRedraw());
+}
+
+} catch (studyErr) {
+  console.error("Routing study section failed to render:", studyErr);
 }
 
 try {
