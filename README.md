@@ -34,9 +34,9 @@ both controllers; source: [`results/results.json`](results/results.json)):
 | Metric | Static routing | AI-adaptive routing |
 |---|---|---|
 | Traffic classification accuracy (held-out) | n/a | 99.7% |
-| Average flow latency | baseline | 15.2% lower |
-| Peak link utilization | baseline | 38.8% lower |
-| Congested flows | 23 | 0 |
+| Average flow latency | baseline | 16.6% lower |
+| Peak link utilization | baseline | 36.1% lower |
+| Congested flows | 24 | 0 |
 
 **Routing study** (8 strategies; source:
 [`results/hybrid_v3/`](results/hybrid_v3/)):
@@ -53,10 +53,9 @@ both controllers; source: [`results/results.json`](results/results.json)):
 The classifier's accuracy is high because the synthetic traffic classes are
 statistically well separated. Real traffic would be harder to classify.
 
-Reruns with newer library versions give slightly different numbers. With
-Python 3.12, scikit-learn 1.9 and NumPy 2.5, `make experiment` gives 16.6%
-lower latency, 36.1% lower peak utilization, and 24 → 0 congested flows. The
-direction of every result is the same.
+These numbers were generated with Python 3.12, scikit-learn 1.9 and NumPy
+2.5. Other library versions can shift them slightly, because the random
+forests and random draws are not bit-identical across releases.
 
 ## Quick start
 
