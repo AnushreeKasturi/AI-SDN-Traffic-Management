@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 # smoke-test output
 results/*/_quick/
+output/playwright/
+.playwright-cli/

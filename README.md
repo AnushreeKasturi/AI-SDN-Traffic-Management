@@ -13,10 +13,13 @@ congestion, then reroutes flows adaptively — and compares it against a
 traditional **static, non-adaptive** routing scheme on the same topology and
 the same traffic.
 
-Open **`index.html`** in any browser — it's a self-contained dashboard (no
-server needed) that presents the whole project to your teacher: architecture,
-topology, ML model performance, and the static-vs-adaptive results, all
-generated from the actual simulation run in `src/`.
+Explore the [**Flowstate dashboard**](https://anushreekasturi.github.io/AI-SDN-Traffic-Management/)
+or open **`index.html`** directly in a browser. The self-contained website
+includes an interactive campus topology, the original experiment, the
+eight-strategy routing study, a browser simulation lab, and model evaluations.
+In the lab, inspect individual static/adaptive flow routes and download each
+run's parameters, random seed, interval results, and sample paths as JSON.
+No server or Node.js runtime is required to view it; external fonts are optional.
 
 ---
 
@@ -93,10 +96,9 @@ cd src
 python3 run_experiment.py
 ```
 
-This regenerates `results/results.json` and `results/topology.png`. To
-rebuild `index.html` from those results (optional — a copy is already
-included), see the inline comments in `run_experiment.py`; the dashboard
-simply embeds that JSON and image.
+This regenerates `results/results.json` and `results/topology.png`. The
+dashboard embeds a saved copy of these results; rerunning the Python
+experiment alone does not update `index.html`.
 
 ## 5. Key results (from the included run)
 
@@ -253,3 +255,10 @@ python export_dashboard.py                     # update the routing-study sectio
 
 The full runs take a while and use a lot of memory; run them in a normal
 terminal rather than in the background.
+
+### Dashboard regression checks
+
+With Node.js installed, run `node --test tests/dashboard.test.mjs`. These
+dependency-free checks verify the embedded datasets, repeated high-DPI chart
+sizing, and the original browser simulation's light, typical, and heavy-load
+baselines. They do not require the Python ML packages or a running server.
