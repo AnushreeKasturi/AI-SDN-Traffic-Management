@@ -30,6 +30,8 @@ echo "=== [3/4] starting controller_${MODE}.py ==="
 rm -f controller_${MODE}.log
 python3 osken_run.py controller_${MODE} > controller_${MODE}.log 2>&1 &
 CTRL_PID=$!
+# stop the controller and Mininet even if a later step fails (set -e)
+trap 'kill "$CTRL_PID" 2>/dev/null || true; mn -c > /dev/null 2>&1 || true' EXIT
 sleep 3
 if ! ss -tln 2>/dev/null | grep -q 6653; then
     echo "Controller failed to start -- see controller_${MODE}.log"
@@ -40,8 +42,6 @@ echo "controller running (pid $CTRL_PID), listening on 6653"
 
 echo "=== [4/4] running congestion-avoidance test ==="
 python3 test_congestion_avoidance.py
-
-kill -9 "$CTRL_PID" 2>/dev/null || true
 
 echo ""
 echo "=== ${MODE} controller's routing decisions for this run ==="
